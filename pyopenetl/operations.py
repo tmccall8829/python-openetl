@@ -9,7 +9,7 @@ from typing import Generator, Union
 import pandas as pd
 import sqlalchemy
 
-from connections import *
+from pyopenetl.connections import *
 
 
 class BaseReader:

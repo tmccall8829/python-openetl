@@ -293,7 +293,7 @@ class CloudSQLWriter(BaseWriter):
             except Exception as err:
                 return f"Failed to write chunk of dataframe to {write_table}: {err}"
 
-            del gf
+            del df
             gc.collect()
 
             its += 1

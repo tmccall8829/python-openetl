@@ -271,6 +271,35 @@ class CloudSQLWriter(BaseWriter):
 
         return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
 
+    def seed_from_remote_csv(
+        self, remote_csv_url: str, write_table: str, chunksize: int = 200_000
+    ) -> str:
+        """
+        Reads chunks of a dataframe from a remote filepath
+        """
+        its = 1
+        nrows = 0
+        start = datetime.datetime.now()
+        for df in pd.read_csv(remote_csv_url, chunksize):
+            print(f"Seeding batch {its}")
+            if its == 1:
+                # write to (an optionally different) table name in Cloud SQL
+                print(f"--> Creating new table {write_table} in Cloud SQL")
+                self.create_table_from_dataframe(write_table, df)
+
+            try:
+                self.write_from_dataframe(table=write_table, df=df, chunksize=chunksize)
+                nrows += df.shape[0]
+            except Exception as err:
+                return f"Failed to write chunk of dataframe to {write_table}: {err}"
+
+            del gf
+            gc.collect()
+
+            its += 1
+
+        return f"Seeded {nrows} rows in {datetime.datetime.now() - start}"
+
     def update_table_via_upsert(
         self,
         read_table: str,

@@ -280,7 +280,7 @@ class CloudSQLWriter(BaseWriter):
         its = 1
         nrows = 0
         start = datetime.datetime.now()
-        for df in pd.read_csv(remote_csv_url, chunksize):
+        for df in pd.read_csv(remote_csv_url, chunksize=200_000):
             print(f"Seeding batch {its}")
             if its == 1:
                 # write to (an optionally different) table name in Cloud SQL

@@ -7,12 +7,7 @@ setup(
     version=VERSION,
     author="Tom McCall",
     author_email="thomas.e.mccall@gmail.com",
-    packages=[
-        "pyopenetl",
-        "pyopenetl.connections",
-        "pyopenetl.operations",
-        "pyopenetl.pipelines",
-    ],
+    packages=["pyopenetl"],
     license="LICENSE",
     url="https://github.com/tmccall8829/python-openetl",
     description="A simple python library that makes it easy to create simple ETL pipelines in code.",

@@ -1,13 +1,18 @@
 from setuptools import setup
 
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 
 setup(
     name="python-openetl",
     version=VERSION,
     author="Tom McCall",
     author_email="thomas.e.mccall@gmail.com",
-    packages=["pyopenetl"],
+    packages=[
+        "pyopenetl",
+        "pyopenetl.connections",
+        "pyopenetl.operations",
+        "pyopenetl.pipelines",
+    ],
     license="LICENSE",
     url="https://github.com/tmccall8829/python-openetl",
     description="A simple python library that makes it easy to create simple ETL pipelines in code.",

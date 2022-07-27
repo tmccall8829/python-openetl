@@ -161,6 +161,25 @@ class BaseWriter:
 
         return f"Wrote {n_rows} rows to Cloud SQL table {table}"
 
+    def execute_raw_sql(self, sql: str, use_textual: bool = False):
+        """
+        Executes raw SQL on the given destination connection. This method
+        makes no attempt to validate the SQL being sent to the destination
+        connection, so do not use this method in a context involving user
+        input.
+        
+        """
+
+        if use_textual:
+            sql = sqlalchemy.text(sql)
+
+        start = datetime.datetime.now()
+        with self.dest_conn.connect() as sql_conn:
+            res = sql_conn.execute(sql)
+
+        print(f"SQL executed in {datetime.datetime.now() - start}")
+        return res
+
 
 class CloudSQLWriter(BaseWriter):
     """
@@ -526,4 +545,3 @@ class HerokuWriter(BaseWriter):
                 )
 
         return f"Safely inserted rows in {datetime.datetime.now() - start}"
-

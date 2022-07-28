@@ -202,7 +202,7 @@ class CloudSQLWriter(BaseWriter):
         super().__init__(source_conn, dest_conn)
 
     def create_table_from_dataframe(
-        self, table: str, df: pd.DataFrame, dtypes: dict = {}
+        self, table: str, df: pd.DataFrame, dtypes: dict = {}, primary_key: str = "id"
     ) -> None:
         """
         Creates an empty table with the correct column names and types.
@@ -210,6 +210,8 @@ class CloudSQLWriter(BaseWriter):
         args:
             table: name of the table to create in Cloud SQL
             df: the dataframe we're using to set column names and types
+            dtypes: a dictionary of column names to sqlalchemy data types
+            primary_key: the primary key of the table we're creating
         """
         with self.dest_conn.connect() as pd_conn:
             df = self.convert_column_types(df)
@@ -228,10 +230,10 @@ class CloudSQLWriter(BaseWriter):
                 )
 
         with self.dest_conn.connect() as cloud_sql_conn:
-            # in order to do upserts later, each table needs to have a unique constraint on id
-            if "id" in df.columns:
+            # in order to do upserts later, each table needs to have a unique constraint on the primary key
+            if primary_key in df.columns:
                 cloud_sql_conn.execute(
-                    f"ALTER TABLE {table} ADD CONSTRAINT {table}_id_unique UNIQUE (id);"
+                    f"ALTER TABLE {table} ADD CONSTRAINT {table}_{primary_key}_unique UNIQUE ({primary_key});"
                 )
 
         del df
@@ -406,7 +408,7 @@ class CloudSQLWriter(BaseWriter):
                             f"DELETE FROM {write_table} WHERE id IN {tuple(ids_to_remove)}"
                         )
 
-        return f"{write_table}: +{nrows} -{ids_to_remove} in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
+        return f"{write_table}: +{nrows} -{len(ids_to_remove)} in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
 
     def gen_update_set_parms(
         self, merging_in: str, table_cols: list, primary_key_id: str

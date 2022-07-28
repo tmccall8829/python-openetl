@@ -39,6 +39,44 @@ class BaseConnection:
         return secret
 
 
+class PostgresConnection(BaseConnection):
+    """
+    Connect to a generic postgres instance.
+    """
+
+    def __init__(
+        self,
+        username: str = "postgres",
+        password: str = "",
+        port: int = 5432,
+        db: str = "postgres",
+    ) -> None:
+        self.instance_ip = os.environ.get("POSTGRES_INSTANCE_IP", "127.0.0.1")
+        self.instance_port = port
+        self.instance_username = username
+        self.instance_password = password
+        self.instance_db = db
+
+    @contextlib.contextmanager
+    def connect(self) -> Generator[sqlalchemy.engine.Engine, None, None]:
+        """Actually connects to a generic postgresql instance."""
+
+        connection = sqlalchemy.create_engine(
+            sqlalchemy.engine.url.URL.create(
+                drivername="postgresql+psycopg2",
+                username=self.instance_username,
+                password=self.instance_password,
+                host=self.instance_ip,
+                port=self.instance_port,
+                database=self.instance_db,
+            )
+        ).connect()
+
+        yield connection
+
+        connection.close()
+
+
 class HerokuConnection(BaseConnection):
     """
     Opens up a connection to a Heroku-managed Postgres instance.
@@ -90,7 +128,7 @@ class HerokuConnection(BaseConnection):
         connection.close()
 
 
-class CloudSQLConnection(BaseConnection):
+class CloudSQLConnection(PostgresConnection):
     """
     Opens up a connection to a GCP Cloud SQL instance.
     
@@ -113,30 +151,20 @@ class CloudSQLConnection(BaseConnection):
         db: str = "postgres",
     ) -> None:
         super().__init__(project)
+
+        self.project = project
+        self.instance_username = username
+
+        # set the PostgresConnection class's password to be the value
+        # of the secret in GCP
+        self.instance_password_gcp_secret_name = gcp_password_secret
+        self.instance_password = self.get_secret(self.instance_password_gcp_secret_name)
+
+        # use CLOUD_SQL_INSTANCE_IP as the env var instead of
+        # POSTGRES_INSTANCE_IP
         self.instance_ip = os.environ.get("CLOUD_SQL_INSTANCE_IP", "127.0.0.1")
         self.instance_port = port
-        self.instance_username = username
-        self.instance_password_gcp_secret_name = gcp_password_secret
         self.instance_db = db
-
-    @contextlib.contextmanager
-    def connect(self) -> Generator[sqlalchemy.engine.Engine, None, None]:
-        """Actually connects to a GCP Cloud SQL instance."""
-
-        connection = sqlalchemy.create_engine(
-            sqlalchemy.engine.url.URL.create(
-                drivername="postgresql+psycopg2",
-                username=self.instance_username,
-                password=self.get_secret(self.instance_password_gcp_secret_name),
-                host=self.instance_ip,
-                port=self.instance_port,
-                database=self.instance_db,
-            )
-        ).connect()
-
-        yield connection
-
-        connection.close()
 
 
 class BQConnection(BaseConnection):

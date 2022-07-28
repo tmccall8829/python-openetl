@@ -43,6 +43,18 @@
 
             </li>
             <li>
+                    <a class="class" href="#PostgresConnection">PostgresConnection</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="function" href="#PostgresConnection.__init__">PostgresConnection</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#PostgresConnection.connect">connect</a>
+                        </li>
+                </ul>
+
+            </li>
+            <li>
                     <a class="class" href="#HerokuConnection">HerokuConnection</a>
                             <ul class="memberlist">
                         <li>
@@ -59,9 +71,6 @@
                             <ul class="memberlist">
                         <li>
                                 <a class="function" href="#CloudSQLConnection.__init__">CloudSQLConnection</a>
-                        </li>
-                        <li>
-                                <a class="function" href="#CloudSQLConnection.connect">connect</a>
                         </li>
                 </ul>
 
@@ -140,125 +149,153 @@
 </span><span id="L-39"><a href="#L-39"><span class="linenos"> 39</span></a>        <span class="k">return</span> <span class="n">secret</span>
 </span><span id="L-40"><a href="#L-40"><span class="linenos"> 40</span></a>
 </span><span id="L-41"><a href="#L-41"><span class="linenos"> 41</span></a>
-</span><span id="L-42"><a href="#L-42"><span class="linenos"> 42</span></a><span class="k">class</span> <span class="nc">HerokuConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
+</span><span id="L-42"><a href="#L-42"><span class="linenos"> 42</span></a><span class="k">class</span> <span class="nc">PostgresConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
 </span><span id="L-43"><a href="#L-43"><span class="linenos"> 43</span></a>    <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-44"><a href="#L-44"><span class="linenos"> 44</span></a><span class="sd">    Opens up a connection to a Heroku-managed Postgres instance.</span>
-</span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a><span class="sd">    </span>
-</span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a><span class="sd">    args:</span>
-</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a><span class="sd">        project (str): the name of the cloud environment project (GCP, AWS, etc.)</span>
-</span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a><span class="sd">            to map to the Heroku Postgres instance name.</span>
-</span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a><span class="sd">        stream_results: whether or not the SQLAlchemy engine object should add the</span>
-</span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a><span class="sd">            stream_results execution option. this should only be enabled when you</span>
-</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a><span class="sd">            are reading from a database -- trying to write with this option set</span>
-</span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a><span class="sd">            will result in a somewhat cryptic cursor-related error.</span>
-</span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a><span class="sd">        db_url_secret_name: the name of the cloud environment secret to read the</span>
-</span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a><span class="sd">            postgres database URL from.</span>
-</span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a>
-</span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a>        <span class="bp">self</span><span class="p">,</span>
-</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a>        <span class="n">stream_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a>        <span class="n">db_url_secret_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;heroku-pg-db-url&quot;</span><span class="p">,</span>
-</span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
-</span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a>
-</span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span> <span class="o">=</span> <span class="n">stream_results</span>
-</span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span> <span class="o">=</span> <span class="n">db_url_secret_name</span>
-</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a>
-</span><span id="L-68"><a href="#L-68"><span class="linenos"> 68</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
-</span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-follower&quot;</span><span class="p">)</span>
-</span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-leader&quot;</span><span class="p">)</span>
-</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a>
-</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-76"><a href="#L-76"><span class="linenos"> 76</span></a><span class="sd">        Connects to a Heroku postgres environment instance.</span>
-</span><span id="L-77"><a href="#L-77"><span class="linenos"> 77</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="L-44"><a href="#L-44"><span class="linenos"> 44</span></a><span class="sd">    Connect to a generic postgres instance.</span>
+</span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a>
+</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+</span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a>        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a>        <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a>        <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5432</span><span class="p">,</span>
+</span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a>        <span class="n">db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;POSTGRES_INSTANCE_IP&quot;</span><span class="p">,</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">)</span>
+</span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span> <span class="o">=</span> <span class="n">port</span>
+</span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span> <span class="o">=</span> <span class="n">username</span>
+</span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password</span> <span class="o">=</span> <span class="n">password</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span> <span class="o">=</span> <span class="n">db</span>
+</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>
+</span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a>        <span class="sd">&quot;&quot;&quot;Actually connects to a generic postgresql instance.&quot;&quot;&quot;</span>
+</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a>
+</span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a>        <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span>
+</span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a>            <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">URL</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a>                <span class="n">drivername</span><span class="o">=</span><span class="s2">&quot;postgresql+psycopg2&quot;</span><span class="p">,</span>
+</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a>                <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span><span class="p">,</span>
+</span><span id="L-68"><a href="#L-68"><span class="linenos"> 68</span></a>                <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_password</span><span class="p">,</span>
+</span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a>                <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span><span class="p">,</span>
+</span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a>                <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span><span class="p">,</span>
+</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a>                <span class="n">database</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span><span class="p">,</span>
+</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a>            <span class="p">)</span>
+</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>        <span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a>
+</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a>        <span class="k">yield</span> <span class="n">connection</span>
+</span><span id="L-76"><a href="#L-76"><span class="linenos"> 76</span></a>
+</span><span id="L-77"><a href="#L-77"><span class="linenos"> 77</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </span><span id="L-78"><a href="#L-78"><span class="linenos"> 78</span></a>
-</span><span id="L-79"><a href="#L-79"><span class="linenos"> 79</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
-</span><span id="L-80"><a href="#L-80"><span class="linenos"> 80</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="p">(</span>
-</span><span id="L-81"><a href="#L-81"><span class="linenos"> 81</span></a>                <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span>
-</span><span id="L-82"><a href="#L-82"><span class="linenos"> 82</span></a>                <span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-</span><span id="L-83"><a href="#L-83"><span class="linenos"> 83</span></a>                <span class="o">.</span><span class="n">execution_options</span><span class="p">(</span><span class="n">stream_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="L-84"><a href="#L-84"><span class="linenos"> 84</span></a>            <span class="p">)</span>
-</span><span id="L-85"><a href="#L-85"><span class="linenos"> 85</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="L-86"><a href="#L-86"><span class="linenos"> 86</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-</span><span id="L-87"><a href="#L-87"><span class="linenos"> 87</span></a>
-</span><span id="L-88"><a href="#L-88"><span class="linenos"> 88</span></a>        <span class="k">yield</span> <span class="n">connection</span>
-</span><span id="L-89"><a href="#L-89"><span class="linenos"> 89</span></a>
-</span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a>
-</span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a>
-</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a><span class="k">class</span> <span class="nc">CloudSQLConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
-</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a>    <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a><span class="sd">    Opens up a connection to a GCP Cloud SQL instance.</span>
-</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a><span class="sd">    </span>
-</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a><span class="sd">    args:</span>
-</span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a><span class="sd">        project: the name of the google cloud project to connect to.</span>
-</span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a><span class="sd">        username: username to use to connect to the instance</span>
-</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a><span class="sd">        gcp_password_secret: the name of the GCP secret manager secret</span>
-</span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a><span class="sd">            containing the password associated with the given username.</span>
-</span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a><span class="sd">            NOT the actual password.</span>
-</span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a><span class="sd">        port: the Cloud SQL instance&#39;s port</span>
-</span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a><span class="sd">        db: the database to connect to (often just &quot;postgres&quot;)</span>
-</span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a>
-</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-</span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a>        <span class="bp">self</span><span class="p">,</span>
-</span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="L-110"><a href="#L-110"><span class="linenos">110</span></a>        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
-</span><span id="L-111"><a href="#L-111"><span class="linenos">111</span></a>        <span class="n">gcp_password_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cloudsql_postgres_default_password&quot;</span><span class="p">,</span>
-</span><span id="L-112"><a href="#L-112"><span class="linenos">112</span></a>        <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5432</span><span class="p">,</span>
-</span><span id="L-113"><a href="#L-113"><span class="linenos">113</span></a>        <span class="n">db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
-</span><span id="L-114"><a href="#L-114"><span class="linenos">114</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-115"><a href="#L-115"><span class="linenos">115</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
-</span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CLOUD_SQL_INSTANCE_IP&quot;</span><span class="p">,</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">)</span>
-</span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span> <span class="o">=</span> <span class="n">port</span>
-</span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span> <span class="o">=</span> <span class="n">username</span>
-</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span> <span class="o">=</span> <span class="n">gcp_password_secret</span>
-</span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span> <span class="o">=</span> <span class="n">db</span>
-</span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a>
-</span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="L-123"><a href="#L-123"><span class="linenos">123</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="L-124"><a href="#L-124"><span class="linenos">124</span></a>        <span class="sd">&quot;&quot;&quot;Actually connects to a GCP Cloud SQL instance.&quot;&quot;&quot;</span>
+</span><span id="L-79"><a href="#L-79"><span class="linenos"> 79</span></a>
+</span><span id="L-80"><a href="#L-80"><span class="linenos"> 80</span></a><span class="k">class</span> <span class="nc">HerokuConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
+</span><span id="L-81"><a href="#L-81"><span class="linenos"> 81</span></a>    <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-82"><a href="#L-82"><span class="linenos"> 82</span></a><span class="sd">    Opens up a connection to a Heroku-managed Postgres instance.</span>
+</span><span id="L-83"><a href="#L-83"><span class="linenos"> 83</span></a><span class="sd">    </span>
+</span><span id="L-84"><a href="#L-84"><span class="linenos"> 84</span></a><span class="sd">    args:</span>
+</span><span id="L-85"><a href="#L-85"><span class="linenos"> 85</span></a><span class="sd">        project (str): the name of the cloud environment project (GCP, AWS, etc.)</span>
+</span><span id="L-86"><a href="#L-86"><span class="linenos"> 86</span></a><span class="sd">            to map to the Heroku Postgres instance name.</span>
+</span><span id="L-87"><a href="#L-87"><span class="linenos"> 87</span></a><span class="sd">        stream_results: whether or not the SQLAlchemy engine object should add the</span>
+</span><span id="L-88"><a href="#L-88"><span class="linenos"> 88</span></a><span class="sd">            stream_results execution option. this should only be enabled when you</span>
+</span><span id="L-89"><a href="#L-89"><span class="linenos"> 89</span></a><span class="sd">            are reading from a database -- trying to write with this option set</span>
+</span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a><span class="sd">            will result in a somewhat cryptic cursor-related error.</span>
+</span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a><span class="sd">        db_url_secret_name: the name of the cloud environment secret to read the</span>
+</span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a><span class="sd">            postgres database URL from.</span>
+</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a>
+</span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a>        <span class="n">stream_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a>        <span class="n">db_url_secret_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;heroku-pg-db-url&quot;</span><span class="p">,</span>
+</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a>
+</span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span> <span class="o">=</span> <span class="n">stream_results</span>
+</span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span> <span class="o">=</span> <span class="n">db_url_secret_name</span>
+</span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a>
+</span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
+</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-follower&quot;</span><span class="p">)</span>
+</span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-leader&quot;</span><span class="p">)</span>
+</span><span id="L-110"><a href="#L-110"><span class="linenos">110</span></a>
+</span><span id="L-111"><a href="#L-111"><span class="linenos">111</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="L-112"><a href="#L-112"><span class="linenos">112</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="L-113"><a href="#L-113"><span class="linenos">113</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-114"><a href="#L-114"><span class="linenos">114</span></a><span class="sd">        Connects to a Heroku postgres environment instance.</span>
+</span><span id="L-115"><a href="#L-115"><span class="linenos">115</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a>
+</span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
+</span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a>                <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span>
+</span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a>                <span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a>                <span class="o">.</span><span class="n">execution_options</span><span class="p">(</span><span class="n">stream_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a>            <span class="p">)</span>
+</span><span id="L-123"><a href="#L-123"><span class="linenos">123</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="L-124"><a href="#L-124"><span class="linenos">124</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
 </span><span id="L-125"><a href="#L-125"><span class="linenos">125</span></a>
-</span><span id="L-126"><a href="#L-126"><span class="linenos">126</span></a>        <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span>
-</span><span id="L-127"><a href="#L-127"><span class="linenos">127</span></a>            <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">URL</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-</span><span id="L-128"><a href="#L-128"><span class="linenos">128</span></a>                <span class="n">drivername</span><span class="o">=</span><span class="s2">&quot;postgresql+psycopg2&quot;</span><span class="p">,</span>
-</span><span id="L-129"><a href="#L-129"><span class="linenos">129</span></a>                <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span><span class="p">,</span>
-</span><span id="L-130"><a href="#L-130"><span class="linenos">130</span></a>                <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span><span class="p">),</span>
-</span><span id="L-131"><a href="#L-131"><span class="linenos">131</span></a>                <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span><span class="p">,</span>
-</span><span id="L-132"><a href="#L-132"><span class="linenos">132</span></a>                <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span><span class="p">,</span>
-</span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a>                <span class="n">database</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span><span class="p">,</span>
-</span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a>            <span class="p">)</span>
-</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a>        <span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-</span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a>
-</span><span id="L-137"><a href="#L-137"><span class="linenos">137</span></a>        <span class="k">yield</span> <span class="n">connection</span>
-</span><span id="L-138"><a href="#L-138"><span class="linenos">138</span></a>
-</span><span id="L-139"><a href="#L-139"><span class="linenos">139</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</span><span id="L-140"><a href="#L-140"><span class="linenos">140</span></a>
-</span><span id="L-141"><a href="#L-141"><span class="linenos">141</span></a>
-</span><span id="L-142"><a href="#L-142"><span class="linenos">142</span></a><span class="k">class</span> <span class="nc">BQConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
-</span><span id="L-143"><a href="#L-143"><span class="linenos">143</span></a>    <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-144"><a href="#L-144"><span class="linenos">144</span></a><span class="sd">    Connects to BigQuery using the bigquery client library.</span>
-</span><span id="L-145"><a href="#L-145"><span class="linenos">145</span></a>
-</span><span id="L-146"><a href="#L-146"><span class="linenos">146</span></a><span class="sd">    args:</span>
-</span><span id="L-147"><a href="#L-147"><span class="linenos">147</span></a><span class="sd">        project (str): The GCP project containing the BigQuery instance we want </span>
-</span><span id="L-148"><a href="#L-148"><span class="linenos">148</span></a><span class="sd">            to connect to.</span>
-</span><span id="L-149"><a href="#L-149"><span class="linenos">149</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-150"><a href="#L-150"><span class="linenos">150</span></a>
-</span><span id="L-151"><a href="#L-151"><span class="linenos">151</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-152"><a href="#L-152"><span class="linenos">152</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
-</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a>
-</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+</span><span id="L-126"><a href="#L-126"><span class="linenos">126</span></a>        <span class="k">yield</span> <span class="n">connection</span>
+</span><span id="L-127"><a href="#L-127"><span class="linenos">127</span></a>
+</span><span id="L-128"><a href="#L-128"><span class="linenos">128</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span id="L-129"><a href="#L-129"><span class="linenos">129</span></a>
+</span><span id="L-130"><a href="#L-130"><span class="linenos">130</span></a>
+</span><span id="L-131"><a href="#L-131"><span class="linenos">131</span></a><span class="k">class</span> <span class="nc">CloudSQLConnection</span><span class="p">(</span><span class="n">PostgresConnection</span><span class="p">):</span>
+</span><span id="L-132"><a href="#L-132"><span class="linenos">132</span></a>    <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a><span class="sd">    Opens up a connection to a GCP Cloud SQL instance.</span>
+</span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a><span class="sd">    </span>
+</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a><span class="sd">    args:</span>
+</span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a><span class="sd">        project: the name of the google cloud project to connect to.</span>
+</span><span id="L-137"><a href="#L-137"><span class="linenos">137</span></a><span class="sd">        username: username to use to connect to the instance</span>
+</span><span id="L-138"><a href="#L-138"><span class="linenos">138</span></a><span class="sd">        gcp_password_secret: the name of the GCP secret manager secret</span>
+</span><span id="L-139"><a href="#L-139"><span class="linenos">139</span></a><span class="sd">            containing the password associated with the given username.</span>
+</span><span id="L-140"><a href="#L-140"><span class="linenos">140</span></a><span class="sd">            NOT the actual password.</span>
+</span><span id="L-141"><a href="#L-141"><span class="linenos">141</span></a><span class="sd">        port: the Cloud SQL instance&#39;s port</span>
+</span><span id="L-142"><a href="#L-142"><span class="linenos">142</span></a><span class="sd">        db: the database to connect to (often just &quot;postgres&quot;)</span>
+</span><span id="L-143"><a href="#L-143"><span class="linenos">143</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-144"><a href="#L-144"><span class="linenos">144</span></a>
+</span><span id="L-145"><a href="#L-145"><span class="linenos">145</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+</span><span id="L-146"><a href="#L-146"><span class="linenos">146</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="L-147"><a href="#L-147"><span class="linenos">147</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="L-148"><a href="#L-148"><span class="linenos">148</span></a>        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="L-149"><a href="#L-149"><span class="linenos">149</span></a>        <span class="n">gcp_password_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cloudsql_postgres_default_password&quot;</span><span class="p">,</span>
+</span><span id="L-150"><a href="#L-150"><span class="linenos">150</span></a>        <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5432</span><span class="p">,</span>
+</span><span id="L-151"><a href="#L-151"><span class="linenos">151</span></a>        <span class="n">db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="L-152"><a href="#L-152"><span class="linenos">152</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a>
+</span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="n">project</span>
+</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span> <span class="o">=</span> <span class="n">username</span>
 </span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a>
-</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a>        <span class="k">yield</span> <span class="n">client</span>
-</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a>
-</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a>        <span class="c1"># set the PostgresConnection class&#39;s password to be the value</span>
+</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a>        <span class="c1"># of the secret in GCP</span>
+</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span> <span class="o">=</span> <span class="n">gcp_password_secret</span>
+</span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span><span class="p">)</span>
+</span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a>
+</span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a>        <span class="c1"># use CLOUD_SQL_INSTANCE_IP as the env var instead of</span>
+</span><span id="L-164"><a href="#L-164"><span class="linenos">164</span></a>        <span class="c1"># POSTGRES_INSTANCE_IP</span>
+</span><span id="L-165"><a href="#L-165"><span class="linenos">165</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CLOUD_SQL_INSTANCE_IP&quot;</span><span class="p">,</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">)</span>
+</span><span id="L-166"><a href="#L-166"><span class="linenos">166</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span> <span class="o">=</span> <span class="n">port</span>
+</span><span id="L-167"><a href="#L-167"><span class="linenos">167</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span> <span class="o">=</span> <span class="n">db</span>
+</span><span id="L-168"><a href="#L-168"><span class="linenos">168</span></a>
+</span><span id="L-169"><a href="#L-169"><span class="linenos">169</span></a>
+</span><span id="L-170"><a href="#L-170"><span class="linenos">170</span></a><span class="k">class</span> <span class="nc">BQConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
+</span><span id="L-171"><a href="#L-171"><span class="linenos">171</span></a>    <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-172"><a href="#L-172"><span class="linenos">172</span></a><span class="sd">    Connects to BigQuery using the bigquery client library.</span>
+</span><span id="L-173"><a href="#L-173"><span class="linenos">173</span></a>
+</span><span id="L-174"><a href="#L-174"><span class="linenos">174</span></a><span class="sd">    args:</span>
+</span><span id="L-175"><a href="#L-175"><span class="linenos">175</span></a><span class="sd">        project (str): The GCP project containing the BigQuery instance we want </span>
+</span><span id="L-176"><a href="#L-176"><span class="linenos">176</span></a><span class="sd">            to connect to.</span>
+</span><span id="L-177"><a href="#L-177"><span class="linenos">177</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-178"><a href="#L-178"><span class="linenos">178</span></a>
+</span><span id="L-179"><a href="#L-179"><span class="linenos">179</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-180"><a href="#L-180"><span class="linenos">180</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="L-181"><a href="#L-181"><span class="linenos">181</span></a>
+</span><span id="L-182"><a href="#L-182"><span class="linenos">182</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="L-183"><a href="#L-183"><span class="linenos">183</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="L-184"><a href="#L-184"><span class="linenos">184</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+</span><span id="L-185"><a href="#L-185"><span class="linenos">185</span></a>
+</span><span id="L-186"><a href="#L-186"><span class="linenos">186</span></a>        <span class="k">yield</span> <span class="n">client</span>
+</span><span id="L-187"><a href="#L-187"><span class="linenos">187</span></a>
+</span><span id="L-188"><a href="#L-188"><span class="linenos">188</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </span></pre></div>
 
 
@@ -377,6 +414,136 @@ to reading the latest version of the secret.</p>
 
                             </div>
                 </section>
+                <section id="PostgresConnection">
+                            <input id="PostgresConnection-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">PostgresConnection</span><wbr>(<span class="base"><a href="#BaseConnection">BaseConnection</a></span>):
+
+                <label class="view-source-button" for="PostgresConnection-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#PostgresConnection"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="PostgresConnection-43"><a href="#PostgresConnection-43"><span class="linenos">43</span></a><span class="k">class</span> <span class="nc">PostgresConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
+</span><span id="PostgresConnection-44"><a href="#PostgresConnection-44"><span class="linenos">44</span></a>    <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="PostgresConnection-45"><a href="#PostgresConnection-45"><span class="linenos">45</span></a><span class="sd">    Connect to a generic postgres instance.</span>
+</span><span id="PostgresConnection-46"><a href="#PostgresConnection-46"><span class="linenos">46</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="PostgresConnection-47"><a href="#PostgresConnection-47"><span class="linenos">47</span></a>
+</span><span id="PostgresConnection-48"><a href="#PostgresConnection-48"><span class="linenos">48</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+</span><span id="PostgresConnection-49"><a href="#PostgresConnection-49"><span class="linenos">49</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="PostgresConnection-50"><a href="#PostgresConnection-50"><span class="linenos">50</span></a>        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="PostgresConnection-51"><a href="#PostgresConnection-51"><span class="linenos">51</span></a>        <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span id="PostgresConnection-52"><a href="#PostgresConnection-52"><span class="linenos">52</span></a>        <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5432</span><span class="p">,</span>
+</span><span id="PostgresConnection-53"><a href="#PostgresConnection-53"><span class="linenos">53</span></a>        <span class="n">db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="PostgresConnection-54"><a href="#PostgresConnection-54"><span class="linenos">54</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="PostgresConnection-55"><a href="#PostgresConnection-55"><span class="linenos">55</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;POSTGRES_INSTANCE_IP&quot;</span><span class="p">,</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">)</span>
+</span><span id="PostgresConnection-56"><a href="#PostgresConnection-56"><span class="linenos">56</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span> <span class="o">=</span> <span class="n">port</span>
+</span><span id="PostgresConnection-57"><a href="#PostgresConnection-57"><span class="linenos">57</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span> <span class="o">=</span> <span class="n">username</span>
+</span><span id="PostgresConnection-58"><a href="#PostgresConnection-58"><span class="linenos">58</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password</span> <span class="o">=</span> <span class="n">password</span>
+</span><span id="PostgresConnection-59"><a href="#PostgresConnection-59"><span class="linenos">59</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span> <span class="o">=</span> <span class="n">db</span>
+</span><span id="PostgresConnection-60"><a href="#PostgresConnection-60"><span class="linenos">60</span></a>
+</span><span id="PostgresConnection-61"><a href="#PostgresConnection-61"><span class="linenos">61</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="PostgresConnection-62"><a href="#PostgresConnection-62"><span class="linenos">62</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="PostgresConnection-63"><a href="#PostgresConnection-63"><span class="linenos">63</span></a>        <span class="sd">&quot;&quot;&quot;Actually connects to a generic postgresql instance.&quot;&quot;&quot;</span>
+</span><span id="PostgresConnection-64"><a href="#PostgresConnection-64"><span class="linenos">64</span></a>
+</span><span id="PostgresConnection-65"><a href="#PostgresConnection-65"><span class="linenos">65</span></a>        <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span>
+</span><span id="PostgresConnection-66"><a href="#PostgresConnection-66"><span class="linenos">66</span></a>            <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">URL</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="PostgresConnection-67"><a href="#PostgresConnection-67"><span class="linenos">67</span></a>                <span class="n">drivername</span><span class="o">=</span><span class="s2">&quot;postgresql+psycopg2&quot;</span><span class="p">,</span>
+</span><span id="PostgresConnection-68"><a href="#PostgresConnection-68"><span class="linenos">68</span></a>                <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span><span class="p">,</span>
+</span><span id="PostgresConnection-69"><a href="#PostgresConnection-69"><span class="linenos">69</span></a>                <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_password</span><span class="p">,</span>
+</span><span id="PostgresConnection-70"><a href="#PostgresConnection-70"><span class="linenos">70</span></a>                <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span><span class="p">,</span>
+</span><span id="PostgresConnection-71"><a href="#PostgresConnection-71"><span class="linenos">71</span></a>                <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span><span class="p">,</span>
+</span><span id="PostgresConnection-72"><a href="#PostgresConnection-72"><span class="linenos">72</span></a>                <span class="n">database</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span><span class="p">,</span>
+</span><span id="PostgresConnection-73"><a href="#PostgresConnection-73"><span class="linenos">73</span></a>            <span class="p">)</span>
+</span><span id="PostgresConnection-74"><a href="#PostgresConnection-74"><span class="linenos">74</span></a>        <span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="PostgresConnection-75"><a href="#PostgresConnection-75"><span class="linenos">75</span></a>
+</span><span id="PostgresConnection-76"><a href="#PostgresConnection-76"><span class="linenos">76</span></a>        <span class="k">yield</span> <span class="n">connection</span>
+</span><span id="PostgresConnection-77"><a href="#PostgresConnection-77"><span class="linenos">77</span></a>
+</span><span id="PostgresConnection-78"><a href="#PostgresConnection-78"><span class="linenos">78</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Connect to a generic postgres instance.</p>
+</div>
+
+
+                            <div id="PostgresConnection.__init__" class="classattr">
+                                        <input id="PostgresConnection.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="name">PostgresConnection</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;postgres&#39;</span>,</span><span class="param">	<span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>,</span><span class="param">	<span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5432</span>,</span><span class="param">	<span class="n">db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;postgres&#39;</span></span>)</span>
+
+                <label class="view-source-button" for="PostgresConnection.__init__-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#PostgresConnection.__init__"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="PostgresConnection.__init__-48"><a href="#PostgresConnection.__init__-48"><span class="linenos">48</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+</span><span id="PostgresConnection.__init__-49"><a href="#PostgresConnection.__init__-49"><span class="linenos">49</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="PostgresConnection.__init__-50"><a href="#PostgresConnection.__init__-50"><span class="linenos">50</span></a>        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="PostgresConnection.__init__-51"><a href="#PostgresConnection.__init__-51"><span class="linenos">51</span></a>        <span class="n">password</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span id="PostgresConnection.__init__-52"><a href="#PostgresConnection.__init__-52"><span class="linenos">52</span></a>        <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5432</span><span class="p">,</span>
+</span><span id="PostgresConnection.__init__-53"><a href="#PostgresConnection.__init__-53"><span class="linenos">53</span></a>        <span class="n">db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="PostgresConnection.__init__-54"><a href="#PostgresConnection.__init__-54"><span class="linenos">54</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="PostgresConnection.__init__-55"><a href="#PostgresConnection.__init__-55"><span class="linenos">55</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;POSTGRES_INSTANCE_IP&quot;</span><span class="p">,</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">)</span>
+</span><span id="PostgresConnection.__init__-56"><a href="#PostgresConnection.__init__-56"><span class="linenos">56</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span> <span class="o">=</span> <span class="n">port</span>
+</span><span id="PostgresConnection.__init__-57"><a href="#PostgresConnection.__init__-57"><span class="linenos">57</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span> <span class="o">=</span> <span class="n">username</span>
+</span><span id="PostgresConnection.__init__-58"><a href="#PostgresConnection.__init__-58"><span class="linenos">58</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password</span> <span class="o">=</span> <span class="n">password</span>
+</span><span id="PostgresConnection.__init__-59"><a href="#PostgresConnection.__init__-59"><span class="linenos">59</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span> <span class="o">=</span> <span class="n">db</span>
+</span></pre></div>
+
+
+    
+
+                            </div>
+                            <div id="PostgresConnection.connect" class="classattr">
+                                        <input id="PostgresConnection.connect-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+                    <div class="decorator">@contextlib.contextmanager</div>
+
+        <span class="def">def</span>
+        <span class="name">connect</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>:</span></span>
+
+                <label class="view-source-button" for="PostgresConnection.connect-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#PostgresConnection.connect"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="PostgresConnection.connect-61"><a href="#PostgresConnection.connect-61"><span class="linenos">61</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="PostgresConnection.connect-62"><a href="#PostgresConnection.connect-62"><span class="linenos">62</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="PostgresConnection.connect-63"><a href="#PostgresConnection.connect-63"><span class="linenos">63</span></a>        <span class="sd">&quot;&quot;&quot;Actually connects to a generic postgresql instance.&quot;&quot;&quot;</span>
+</span><span id="PostgresConnection.connect-64"><a href="#PostgresConnection.connect-64"><span class="linenos">64</span></a>
+</span><span id="PostgresConnection.connect-65"><a href="#PostgresConnection.connect-65"><span class="linenos">65</span></a>        <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span>
+</span><span id="PostgresConnection.connect-66"><a href="#PostgresConnection.connect-66"><span class="linenos">66</span></a>            <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">URL</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+</span><span id="PostgresConnection.connect-67"><a href="#PostgresConnection.connect-67"><span class="linenos">67</span></a>                <span class="n">drivername</span><span class="o">=</span><span class="s2">&quot;postgresql+psycopg2&quot;</span><span class="p">,</span>
+</span><span id="PostgresConnection.connect-68"><a href="#PostgresConnection.connect-68"><span class="linenos">68</span></a>                <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span><span class="p">,</span>
+</span><span id="PostgresConnection.connect-69"><a href="#PostgresConnection.connect-69"><span class="linenos">69</span></a>                <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_password</span><span class="p">,</span>
+</span><span id="PostgresConnection.connect-70"><a href="#PostgresConnection.connect-70"><span class="linenos">70</span></a>                <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span><span class="p">,</span>
+</span><span id="PostgresConnection.connect-71"><a href="#PostgresConnection.connect-71"><span class="linenos">71</span></a>                <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span><span class="p">,</span>
+</span><span id="PostgresConnection.connect-72"><a href="#PostgresConnection.connect-72"><span class="linenos">72</span></a>                <span class="n">database</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span><span class="p">,</span>
+</span><span id="PostgresConnection.connect-73"><a href="#PostgresConnection.connect-73"><span class="linenos">73</span></a>            <span class="p">)</span>
+</span><span id="PostgresConnection.connect-74"><a href="#PostgresConnection.connect-74"><span class="linenos">74</span></a>        <span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="PostgresConnection.connect-75"><a href="#PostgresConnection.connect-75"><span class="linenos">75</span></a>
+</span><span id="PostgresConnection.connect-76"><a href="#PostgresConnection.connect-76"><span class="linenos">76</span></a>        <span class="k">yield</span> <span class="n">connection</span>
+</span><span id="PostgresConnection.connect-77"><a href="#PostgresConnection.connect-77"><span class="linenos">77</span></a>
+</span><span id="PostgresConnection.connect-78"><a href="#PostgresConnection.connect-78"><span class="linenos">78</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Actually connects to a generic postgresql instance.</p>
+</div>
+
+
+                            </div>
+                            <div class="inherited">
+                                <h5>Inherited Members</h5>
+                                <dl>
+                                    <div><dt><a href="#BaseConnection">BaseConnection</a></dt>
+                                <dd id="PostgresConnection.get_secret" class="function"><a href="#BaseConnection.get_secret">get_secret</a></dd>
+
+            </div>
+                                </dl>
+                            </div>
+                </section>
                 <section id="HerokuConnection">
                             <input id="HerokuConnection-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
@@ -388,55 +555,55 @@ to reading the latest version of the secret.</p>
 
     </div>
     <a class="headerlink" href="#HerokuConnection"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="HerokuConnection-43"><a href="#HerokuConnection-43"><span class="linenos">43</span></a><span class="k">class</span> <span class="nc">HerokuConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
-</span><span id="HerokuConnection-44"><a href="#HerokuConnection-44"><span class="linenos">44</span></a>    <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="HerokuConnection-45"><a href="#HerokuConnection-45"><span class="linenos">45</span></a><span class="sd">    Opens up a connection to a Heroku-managed Postgres instance.</span>
-</span><span id="HerokuConnection-46"><a href="#HerokuConnection-46"><span class="linenos">46</span></a><span class="sd">    </span>
-</span><span id="HerokuConnection-47"><a href="#HerokuConnection-47"><span class="linenos">47</span></a><span class="sd">    args:</span>
-</span><span id="HerokuConnection-48"><a href="#HerokuConnection-48"><span class="linenos">48</span></a><span class="sd">        project (str): the name of the cloud environment project (GCP, AWS, etc.)</span>
-</span><span id="HerokuConnection-49"><a href="#HerokuConnection-49"><span class="linenos">49</span></a><span class="sd">            to map to the Heroku Postgres instance name.</span>
-</span><span id="HerokuConnection-50"><a href="#HerokuConnection-50"><span class="linenos">50</span></a><span class="sd">        stream_results: whether or not the SQLAlchemy engine object should add the</span>
-</span><span id="HerokuConnection-51"><a href="#HerokuConnection-51"><span class="linenos">51</span></a><span class="sd">            stream_results execution option. this should only be enabled when you</span>
-</span><span id="HerokuConnection-52"><a href="#HerokuConnection-52"><span class="linenos">52</span></a><span class="sd">            are reading from a database -- trying to write with this option set</span>
-</span><span id="HerokuConnection-53"><a href="#HerokuConnection-53"><span class="linenos">53</span></a><span class="sd">            will result in a somewhat cryptic cursor-related error.</span>
-</span><span id="HerokuConnection-54"><a href="#HerokuConnection-54"><span class="linenos">54</span></a><span class="sd">        db_url_secret_name: the name of the cloud environment secret to read the</span>
-</span><span id="HerokuConnection-55"><a href="#HerokuConnection-55"><span class="linenos">55</span></a><span class="sd">            postgres database URL from.</span>
-</span><span id="HerokuConnection-56"><a href="#HerokuConnection-56"><span class="linenos">56</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="HerokuConnection-57"><a href="#HerokuConnection-57"><span class="linenos">57</span></a>
-</span><span id="HerokuConnection-58"><a href="#HerokuConnection-58"><span class="linenos">58</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-</span><span id="HerokuConnection-59"><a href="#HerokuConnection-59"><span class="linenos">59</span></a>        <span class="bp">self</span><span class="p">,</span>
-</span><span id="HerokuConnection-60"><a href="#HerokuConnection-60"><span class="linenos">60</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="HerokuConnection-61"><a href="#HerokuConnection-61"><span class="linenos">61</span></a>        <span class="n">stream_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="HerokuConnection-62"><a href="#HerokuConnection-62"><span class="linenos">62</span></a>        <span class="n">db_url_secret_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;heroku-pg-db-url&quot;</span><span class="p">,</span>
-</span><span id="HerokuConnection-63"><a href="#HerokuConnection-63"><span class="linenos">63</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="HerokuConnection-64"><a href="#HerokuConnection-64"><span class="linenos">64</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
-</span><span id="HerokuConnection-65"><a href="#HerokuConnection-65"><span class="linenos">65</span></a>
-</span><span id="HerokuConnection-66"><a href="#HerokuConnection-66"><span class="linenos">66</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span> <span class="o">=</span> <span class="n">stream_results</span>
-</span><span id="HerokuConnection-67"><a href="#HerokuConnection-67"><span class="linenos">67</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span> <span class="o">=</span> <span class="n">db_url_secret_name</span>
-</span><span id="HerokuConnection-68"><a href="#HerokuConnection-68"><span class="linenos">68</span></a>
-</span><span id="HerokuConnection-69"><a href="#HerokuConnection-69"><span class="linenos">69</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
-</span><span id="HerokuConnection-70"><a href="#HerokuConnection-70"><span class="linenos">70</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-follower&quot;</span><span class="p">)</span>
-</span><span id="HerokuConnection-71"><a href="#HerokuConnection-71"><span class="linenos">71</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="HerokuConnection-72"><a href="#HerokuConnection-72"><span class="linenos">72</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-leader&quot;</span><span class="p">)</span>
-</span><span id="HerokuConnection-73"><a href="#HerokuConnection-73"><span class="linenos">73</span></a>
-</span><span id="HerokuConnection-74"><a href="#HerokuConnection-74"><span class="linenos">74</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="HerokuConnection-75"><a href="#HerokuConnection-75"><span class="linenos">75</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="HerokuConnection-76"><a href="#HerokuConnection-76"><span class="linenos">76</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="HerokuConnection-77"><a href="#HerokuConnection-77"><span class="linenos">77</span></a><span class="sd">        Connects to a Heroku postgres environment instance.</span>
-</span><span id="HerokuConnection-78"><a href="#HerokuConnection-78"><span class="linenos">78</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="HerokuConnection-79"><a href="#HerokuConnection-79"><span class="linenos">79</span></a>
-</span><span id="HerokuConnection-80"><a href="#HerokuConnection-80"><span class="linenos">80</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
-</span><span id="HerokuConnection-81"><a href="#HerokuConnection-81"><span class="linenos">81</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="p">(</span>
-</span><span id="HerokuConnection-82"><a href="#HerokuConnection-82"><span class="linenos">82</span></a>                <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span>
-</span><span id="HerokuConnection-83"><a href="#HerokuConnection-83"><span class="linenos">83</span></a>                <span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-</span><span id="HerokuConnection-84"><a href="#HerokuConnection-84"><span class="linenos">84</span></a>                <span class="o">.</span><span class="n">execution_options</span><span class="p">(</span><span class="n">stream_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="HerokuConnection-85"><a href="#HerokuConnection-85"><span class="linenos">85</span></a>            <span class="p">)</span>
-</span><span id="HerokuConnection-86"><a href="#HerokuConnection-86"><span class="linenos">86</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="HerokuConnection-87"><a href="#HerokuConnection-87"><span class="linenos">87</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-</span><span id="HerokuConnection-88"><a href="#HerokuConnection-88"><span class="linenos">88</span></a>
-</span><span id="HerokuConnection-89"><a href="#HerokuConnection-89"><span class="linenos">89</span></a>        <span class="k">yield</span> <span class="n">connection</span>
-</span><span id="HerokuConnection-90"><a href="#HerokuConnection-90"><span class="linenos">90</span></a>
-</span><span id="HerokuConnection-91"><a href="#HerokuConnection-91"><span class="linenos">91</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="HerokuConnection-81"><a href="#HerokuConnection-81"><span class="linenos"> 81</span></a><span class="k">class</span> <span class="nc">HerokuConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
+</span><span id="HerokuConnection-82"><a href="#HerokuConnection-82"><span class="linenos"> 82</span></a>    <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="HerokuConnection-83"><a href="#HerokuConnection-83"><span class="linenos"> 83</span></a><span class="sd">    Opens up a connection to a Heroku-managed Postgres instance.</span>
+</span><span id="HerokuConnection-84"><a href="#HerokuConnection-84"><span class="linenos"> 84</span></a><span class="sd">    </span>
+</span><span id="HerokuConnection-85"><a href="#HerokuConnection-85"><span class="linenos"> 85</span></a><span class="sd">    args:</span>
+</span><span id="HerokuConnection-86"><a href="#HerokuConnection-86"><span class="linenos"> 86</span></a><span class="sd">        project (str): the name of the cloud environment project (GCP, AWS, etc.)</span>
+</span><span id="HerokuConnection-87"><a href="#HerokuConnection-87"><span class="linenos"> 87</span></a><span class="sd">            to map to the Heroku Postgres instance name.</span>
+</span><span id="HerokuConnection-88"><a href="#HerokuConnection-88"><span class="linenos"> 88</span></a><span class="sd">        stream_results: whether or not the SQLAlchemy engine object should add the</span>
+</span><span id="HerokuConnection-89"><a href="#HerokuConnection-89"><span class="linenos"> 89</span></a><span class="sd">            stream_results execution option. this should only be enabled when you</span>
+</span><span id="HerokuConnection-90"><a href="#HerokuConnection-90"><span class="linenos"> 90</span></a><span class="sd">            are reading from a database -- trying to write with this option set</span>
+</span><span id="HerokuConnection-91"><a href="#HerokuConnection-91"><span class="linenos"> 91</span></a><span class="sd">            will result in a somewhat cryptic cursor-related error.</span>
+</span><span id="HerokuConnection-92"><a href="#HerokuConnection-92"><span class="linenos"> 92</span></a><span class="sd">        db_url_secret_name: the name of the cloud environment secret to read the</span>
+</span><span id="HerokuConnection-93"><a href="#HerokuConnection-93"><span class="linenos"> 93</span></a><span class="sd">            postgres database URL from.</span>
+</span><span id="HerokuConnection-94"><a href="#HerokuConnection-94"><span class="linenos"> 94</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="HerokuConnection-95"><a href="#HerokuConnection-95"><span class="linenos"> 95</span></a>
+</span><span id="HerokuConnection-96"><a href="#HerokuConnection-96"><span class="linenos"> 96</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+</span><span id="HerokuConnection-97"><a href="#HerokuConnection-97"><span class="linenos"> 97</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="HerokuConnection-98"><a href="#HerokuConnection-98"><span class="linenos"> 98</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="HerokuConnection-99"><a href="#HerokuConnection-99"><span class="linenos"> 99</span></a>        <span class="n">stream_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="HerokuConnection-100"><a href="#HerokuConnection-100"><span class="linenos">100</span></a>        <span class="n">db_url_secret_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;heroku-pg-db-url&quot;</span><span class="p">,</span>
+</span><span id="HerokuConnection-101"><a href="#HerokuConnection-101"><span class="linenos">101</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="HerokuConnection-102"><a href="#HerokuConnection-102"><span class="linenos">102</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="HerokuConnection-103"><a href="#HerokuConnection-103"><span class="linenos">103</span></a>
+</span><span id="HerokuConnection-104"><a href="#HerokuConnection-104"><span class="linenos">104</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span> <span class="o">=</span> <span class="n">stream_results</span>
+</span><span id="HerokuConnection-105"><a href="#HerokuConnection-105"><span class="linenos">105</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span> <span class="o">=</span> <span class="n">db_url_secret_name</span>
+</span><span id="HerokuConnection-106"><a href="#HerokuConnection-106"><span class="linenos">106</span></a>
+</span><span id="HerokuConnection-107"><a href="#HerokuConnection-107"><span class="linenos">107</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
+</span><span id="HerokuConnection-108"><a href="#HerokuConnection-108"><span class="linenos">108</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-follower&quot;</span><span class="p">)</span>
+</span><span id="HerokuConnection-109"><a href="#HerokuConnection-109"><span class="linenos">109</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="HerokuConnection-110"><a href="#HerokuConnection-110"><span class="linenos">110</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-leader&quot;</span><span class="p">)</span>
+</span><span id="HerokuConnection-111"><a href="#HerokuConnection-111"><span class="linenos">111</span></a>
+</span><span id="HerokuConnection-112"><a href="#HerokuConnection-112"><span class="linenos">112</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="HerokuConnection-113"><a href="#HerokuConnection-113"><span class="linenos">113</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="HerokuConnection-114"><a href="#HerokuConnection-114"><span class="linenos">114</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="HerokuConnection-115"><a href="#HerokuConnection-115"><span class="linenos">115</span></a><span class="sd">        Connects to a Heroku postgres environment instance.</span>
+</span><span id="HerokuConnection-116"><a href="#HerokuConnection-116"><span class="linenos">116</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="HerokuConnection-117"><a href="#HerokuConnection-117"><span class="linenos">117</span></a>
+</span><span id="HerokuConnection-118"><a href="#HerokuConnection-118"><span class="linenos">118</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
+</span><span id="HerokuConnection-119"><a href="#HerokuConnection-119"><span class="linenos">119</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="HerokuConnection-120"><a href="#HerokuConnection-120"><span class="linenos">120</span></a>                <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span>
+</span><span id="HerokuConnection-121"><a href="#HerokuConnection-121"><span class="linenos">121</span></a>                <span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="HerokuConnection-122"><a href="#HerokuConnection-122"><span class="linenos">122</span></a>                <span class="o">.</span><span class="n">execution_options</span><span class="p">(</span><span class="n">stream_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="HerokuConnection-123"><a href="#HerokuConnection-123"><span class="linenos">123</span></a>            <span class="p">)</span>
+</span><span id="HerokuConnection-124"><a href="#HerokuConnection-124"><span class="linenos">124</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="HerokuConnection-125"><a href="#HerokuConnection-125"><span class="linenos">125</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="HerokuConnection-126"><a href="#HerokuConnection-126"><span class="linenos">126</span></a>
+</span><span id="HerokuConnection-127"><a href="#HerokuConnection-127"><span class="linenos">127</span></a>        <span class="k">yield</span> <span class="n">connection</span>
+</span><span id="HerokuConnection-128"><a href="#HerokuConnection-128"><span class="linenos">128</span></a>
+</span><span id="HerokuConnection-129"><a href="#HerokuConnection-129"><span class="linenos">129</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </span></pre></div>
 
 
@@ -464,21 +631,21 @@ to reading the latest version of the secret.</p>
 
     </div>
     <a class="headerlink" href="#HerokuConnection.__init__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="HerokuConnection.__init__-58"><a href="#HerokuConnection.__init__-58"><span class="linenos">58</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-</span><span id="HerokuConnection.__init__-59"><a href="#HerokuConnection.__init__-59"><span class="linenos">59</span></a>        <span class="bp">self</span><span class="p">,</span>
-</span><span id="HerokuConnection.__init__-60"><a href="#HerokuConnection.__init__-60"><span class="linenos">60</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="HerokuConnection.__init__-61"><a href="#HerokuConnection.__init__-61"><span class="linenos">61</span></a>        <span class="n">stream_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="HerokuConnection.__init__-62"><a href="#HerokuConnection.__init__-62"><span class="linenos">62</span></a>        <span class="n">db_url_secret_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;heroku-pg-db-url&quot;</span><span class="p">,</span>
-</span><span id="HerokuConnection.__init__-63"><a href="#HerokuConnection.__init__-63"><span class="linenos">63</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="HerokuConnection.__init__-64"><a href="#HerokuConnection.__init__-64"><span class="linenos">64</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
-</span><span id="HerokuConnection.__init__-65"><a href="#HerokuConnection.__init__-65"><span class="linenos">65</span></a>
-</span><span id="HerokuConnection.__init__-66"><a href="#HerokuConnection.__init__-66"><span class="linenos">66</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span> <span class="o">=</span> <span class="n">stream_results</span>
-</span><span id="HerokuConnection.__init__-67"><a href="#HerokuConnection.__init__-67"><span class="linenos">67</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span> <span class="o">=</span> <span class="n">db_url_secret_name</span>
-</span><span id="HerokuConnection.__init__-68"><a href="#HerokuConnection.__init__-68"><span class="linenos">68</span></a>
-</span><span id="HerokuConnection.__init__-69"><a href="#HerokuConnection.__init__-69"><span class="linenos">69</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
-</span><span id="HerokuConnection.__init__-70"><a href="#HerokuConnection.__init__-70"><span class="linenos">70</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-follower&quot;</span><span class="p">)</span>
-</span><span id="HerokuConnection.__init__-71"><a href="#HerokuConnection.__init__-71"><span class="linenos">71</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="HerokuConnection.__init__-72"><a href="#HerokuConnection.__init__-72"><span class="linenos">72</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-leader&quot;</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="HerokuConnection.__init__-96"><a href="#HerokuConnection.__init__-96"><span class="linenos"> 96</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+</span><span id="HerokuConnection.__init__-97"><a href="#HerokuConnection.__init__-97"><span class="linenos"> 97</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="HerokuConnection.__init__-98"><a href="#HerokuConnection.__init__-98"><span class="linenos"> 98</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="HerokuConnection.__init__-99"><a href="#HerokuConnection.__init__-99"><span class="linenos"> 99</span></a>        <span class="n">stream_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="HerokuConnection.__init__-100"><a href="#HerokuConnection.__init__-100"><span class="linenos">100</span></a>        <span class="n">db_url_secret_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;heroku-pg-db-url&quot;</span><span class="p">,</span>
+</span><span id="HerokuConnection.__init__-101"><a href="#HerokuConnection.__init__-101"><span class="linenos">101</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="HerokuConnection.__init__-102"><a href="#HerokuConnection.__init__-102"><span class="linenos">102</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="HerokuConnection.__init__-103"><a href="#HerokuConnection.__init__-103"><span class="linenos">103</span></a>
+</span><span id="HerokuConnection.__init__-104"><a href="#HerokuConnection.__init__-104"><span class="linenos">104</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span> <span class="o">=</span> <span class="n">stream_results</span>
+</span><span id="HerokuConnection.__init__-105"><a href="#HerokuConnection.__init__-105"><span class="linenos">105</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span> <span class="o">=</span> <span class="n">db_url_secret_name</span>
+</span><span id="HerokuConnection.__init__-106"><a href="#HerokuConnection.__init__-106"><span class="linenos">106</span></a>
+</span><span id="HerokuConnection.__init__-107"><a href="#HerokuConnection.__init__-107"><span class="linenos">107</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
+</span><span id="HerokuConnection.__init__-108"><a href="#HerokuConnection.__init__-108"><span class="linenos">108</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-follower&quot;</span><span class="p">)</span>
+</span><span id="HerokuConnection.__init__-109"><a href="#HerokuConnection.__init__-109"><span class="linenos">109</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="HerokuConnection.__init__-110"><a href="#HerokuConnection.__init__-110"><span class="linenos">110</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">db_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url_secret_name</span><span class="si">}</span><span class="s2">-leader&quot;</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -497,24 +664,24 @@ to reading the latest version of the secret.</p>
 
     </div>
     <a class="headerlink" href="#HerokuConnection.connect"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="HerokuConnection.connect-74"><a href="#HerokuConnection.connect-74"><span class="linenos">74</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="HerokuConnection.connect-75"><a href="#HerokuConnection.connect-75"><span class="linenos">75</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="HerokuConnection.connect-76"><a href="#HerokuConnection.connect-76"><span class="linenos">76</span></a>        <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="HerokuConnection.connect-77"><a href="#HerokuConnection.connect-77"><span class="linenos">77</span></a><span class="sd">        Connects to a Heroku postgres environment instance.</span>
-</span><span id="HerokuConnection.connect-78"><a href="#HerokuConnection.connect-78"><span class="linenos">78</span></a><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="HerokuConnection.connect-79"><a href="#HerokuConnection.connect-79"><span class="linenos">79</span></a>
-</span><span id="HerokuConnection.connect-80"><a href="#HerokuConnection.connect-80"><span class="linenos">80</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
-</span><span id="HerokuConnection.connect-81"><a href="#HerokuConnection.connect-81"><span class="linenos">81</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="p">(</span>
-</span><span id="HerokuConnection.connect-82"><a href="#HerokuConnection.connect-82"><span class="linenos">82</span></a>                <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span>
-</span><span id="HerokuConnection.connect-83"><a href="#HerokuConnection.connect-83"><span class="linenos">83</span></a>                <span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-</span><span id="HerokuConnection.connect-84"><a href="#HerokuConnection.connect-84"><span class="linenos">84</span></a>                <span class="o">.</span><span class="n">execution_options</span><span class="p">(</span><span class="n">stream_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="HerokuConnection.connect-85"><a href="#HerokuConnection.connect-85"><span class="linenos">85</span></a>            <span class="p">)</span>
-</span><span id="HerokuConnection.connect-86"><a href="#HerokuConnection.connect-86"><span class="linenos">86</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="HerokuConnection.connect-87"><a href="#HerokuConnection.connect-87"><span class="linenos">87</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-</span><span id="HerokuConnection.connect-88"><a href="#HerokuConnection.connect-88"><span class="linenos">88</span></a>
-</span><span id="HerokuConnection.connect-89"><a href="#HerokuConnection.connect-89"><span class="linenos">89</span></a>        <span class="k">yield</span> <span class="n">connection</span>
-</span><span id="HerokuConnection.connect-90"><a href="#HerokuConnection.connect-90"><span class="linenos">90</span></a>
-</span><span id="HerokuConnection.connect-91"><a href="#HerokuConnection.connect-91"><span class="linenos">91</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="HerokuConnection.connect-112"><a href="#HerokuConnection.connect-112"><span class="linenos">112</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="HerokuConnection.connect-113"><a href="#HerokuConnection.connect-113"><span class="linenos">113</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="HerokuConnection.connect-114"><a href="#HerokuConnection.connect-114"><span class="linenos">114</span></a>        <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="HerokuConnection.connect-115"><a href="#HerokuConnection.connect-115"><span class="linenos">115</span></a><span class="sd">        Connects to a Heroku postgres environment instance.</span>
+</span><span id="HerokuConnection.connect-116"><a href="#HerokuConnection.connect-116"><span class="linenos">116</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="HerokuConnection.connect-117"><a href="#HerokuConnection.connect-117"><span class="linenos">117</span></a>
+</span><span id="HerokuConnection.connect-118"><a href="#HerokuConnection.connect-118"><span class="linenos">118</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">:</span>
+</span><span id="HerokuConnection.connect-119"><a href="#HerokuConnection.connect-119"><span class="linenos">119</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="HerokuConnection.connect-120"><a href="#HerokuConnection.connect-120"><span class="linenos">120</span></a>                <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span>
+</span><span id="HerokuConnection.connect-121"><a href="#HerokuConnection.connect-121"><span class="linenos">121</span></a>                <span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="HerokuConnection.connect-122"><a href="#HerokuConnection.connect-122"><span class="linenos">122</span></a>                <span class="o">.</span><span class="n">execution_options</span><span class="p">(</span><span class="n">stream_results</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="HerokuConnection.connect-123"><a href="#HerokuConnection.connect-123"><span class="linenos">123</span></a>            <span class="p">)</span>
+</span><span id="HerokuConnection.connect-124"><a href="#HerokuConnection.connect-124"><span class="linenos">124</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="HerokuConnection.connect-125"><a href="#HerokuConnection.connect-125"><span class="linenos">125</span></a>            <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_url</span><span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="HerokuConnection.connect-126"><a href="#HerokuConnection.connect-126"><span class="linenos">126</span></a>
+</span><span id="HerokuConnection.connect-127"><a href="#HerokuConnection.connect-127"><span class="linenos">127</span></a>        <span class="k">yield</span> <span class="n">connection</span>
+</span><span id="HerokuConnection.connect-128"><a href="#HerokuConnection.connect-128"><span class="linenos">128</span></a>
+</span><span id="HerokuConnection.connect-129"><a href="#HerokuConnection.connect-129"><span class="linenos">129</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </span></pre></div>
 
 
@@ -538,59 +705,49 @@ to reading the latest version of the secret.</p>
 <div class="attr class">
             
     <span class="def">class</span>
-    <span class="name">CloudSQLConnection</span><wbr>(<span class="base"><a href="#BaseConnection">BaseConnection</a></span>):
+    <span class="name">CloudSQLConnection</span><wbr>(<span class="base"><a href="#PostgresConnection">PostgresConnection</a></span>):
 
                 <label class="view-source-button" for="CloudSQLConnection-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#CloudSQLConnection"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="CloudSQLConnection-94"><a href="#CloudSQLConnection-94"><span class="linenos"> 94</span></a><span class="k">class</span> <span class="nc">CloudSQLConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
-</span><span id="CloudSQLConnection-95"><a href="#CloudSQLConnection-95"><span class="linenos"> 95</span></a>    <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="CloudSQLConnection-96"><a href="#CloudSQLConnection-96"><span class="linenos"> 96</span></a><span class="sd">    Opens up a connection to a GCP Cloud SQL instance.</span>
-</span><span id="CloudSQLConnection-97"><a href="#CloudSQLConnection-97"><span class="linenos"> 97</span></a><span class="sd">    </span>
-</span><span id="CloudSQLConnection-98"><a href="#CloudSQLConnection-98"><span class="linenos"> 98</span></a><span class="sd">    args:</span>
-</span><span id="CloudSQLConnection-99"><a href="#CloudSQLConnection-99"><span class="linenos"> 99</span></a><span class="sd">        project: the name of the google cloud project to connect to.</span>
-</span><span id="CloudSQLConnection-100"><a href="#CloudSQLConnection-100"><span class="linenos">100</span></a><span class="sd">        username: username to use to connect to the instance</span>
-</span><span id="CloudSQLConnection-101"><a href="#CloudSQLConnection-101"><span class="linenos">101</span></a><span class="sd">        gcp_password_secret: the name of the GCP secret manager secret</span>
-</span><span id="CloudSQLConnection-102"><a href="#CloudSQLConnection-102"><span class="linenos">102</span></a><span class="sd">            containing the password associated with the given username.</span>
-</span><span id="CloudSQLConnection-103"><a href="#CloudSQLConnection-103"><span class="linenos">103</span></a><span class="sd">            NOT the actual password.</span>
-</span><span id="CloudSQLConnection-104"><a href="#CloudSQLConnection-104"><span class="linenos">104</span></a><span class="sd">        port: the Cloud SQL instance&#39;s port</span>
-</span><span id="CloudSQLConnection-105"><a href="#CloudSQLConnection-105"><span class="linenos">105</span></a><span class="sd">        db: the database to connect to (often just &quot;postgres&quot;)</span>
-</span><span id="CloudSQLConnection-106"><a href="#CloudSQLConnection-106"><span class="linenos">106</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="CloudSQLConnection-107"><a href="#CloudSQLConnection-107"><span class="linenos">107</span></a>
-</span><span id="CloudSQLConnection-108"><a href="#CloudSQLConnection-108"><span class="linenos">108</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-</span><span id="CloudSQLConnection-109"><a href="#CloudSQLConnection-109"><span class="linenos">109</span></a>        <span class="bp">self</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-110"><a href="#CloudSQLConnection-110"><span class="linenos">110</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-111"><a href="#CloudSQLConnection-111"><span class="linenos">111</span></a>        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-112"><a href="#CloudSQLConnection-112"><span class="linenos">112</span></a>        <span class="n">gcp_password_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cloudsql_postgres_default_password&quot;</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-113"><a href="#CloudSQLConnection-113"><span class="linenos">113</span></a>        <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5432</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-114"><a href="#CloudSQLConnection-114"><span class="linenos">114</span></a>        <span class="n">db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-115"><a href="#CloudSQLConnection-115"><span class="linenos">115</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="CloudSQLConnection-116"><a href="#CloudSQLConnection-116"><span class="linenos">116</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
-</span><span id="CloudSQLConnection-117"><a href="#CloudSQLConnection-117"><span class="linenos">117</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CLOUD_SQL_INSTANCE_IP&quot;</span><span class="p">,</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">)</span>
-</span><span id="CloudSQLConnection-118"><a href="#CloudSQLConnection-118"><span class="linenos">118</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span> <span class="o">=</span> <span class="n">port</span>
-</span><span id="CloudSQLConnection-119"><a href="#CloudSQLConnection-119"><span class="linenos">119</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span> <span class="o">=</span> <span class="n">username</span>
-</span><span id="CloudSQLConnection-120"><a href="#CloudSQLConnection-120"><span class="linenos">120</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span> <span class="o">=</span> <span class="n">gcp_password_secret</span>
-</span><span id="CloudSQLConnection-121"><a href="#CloudSQLConnection-121"><span class="linenos">121</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span> <span class="o">=</span> <span class="n">db</span>
-</span><span id="CloudSQLConnection-122"><a href="#CloudSQLConnection-122"><span class="linenos">122</span></a>
-</span><span id="CloudSQLConnection-123"><a href="#CloudSQLConnection-123"><span class="linenos">123</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="CloudSQLConnection-124"><a href="#CloudSQLConnection-124"><span class="linenos">124</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="CloudSQLConnection-125"><a href="#CloudSQLConnection-125"><span class="linenos">125</span></a>        <span class="sd">&quot;&quot;&quot;Actually connects to a GCP Cloud SQL instance.&quot;&quot;&quot;</span>
-</span><span id="CloudSQLConnection-126"><a href="#CloudSQLConnection-126"><span class="linenos">126</span></a>
-</span><span id="CloudSQLConnection-127"><a href="#CloudSQLConnection-127"><span class="linenos">127</span></a>        <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span>
-</span><span id="CloudSQLConnection-128"><a href="#CloudSQLConnection-128"><span class="linenos">128</span></a>            <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">URL</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-</span><span id="CloudSQLConnection-129"><a href="#CloudSQLConnection-129"><span class="linenos">129</span></a>                <span class="n">drivername</span><span class="o">=</span><span class="s2">&quot;postgresql+psycopg2&quot;</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-130"><a href="#CloudSQLConnection-130"><span class="linenos">130</span></a>                <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-131"><a href="#CloudSQLConnection-131"><span class="linenos">131</span></a>                <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span><span class="p">),</span>
-</span><span id="CloudSQLConnection-132"><a href="#CloudSQLConnection-132"><span class="linenos">132</span></a>                <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-133"><a href="#CloudSQLConnection-133"><span class="linenos">133</span></a>                <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-134"><a href="#CloudSQLConnection-134"><span class="linenos">134</span></a>                <span class="n">database</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span><span class="p">,</span>
-</span><span id="CloudSQLConnection-135"><a href="#CloudSQLConnection-135"><span class="linenos">135</span></a>            <span class="p">)</span>
-</span><span id="CloudSQLConnection-136"><a href="#CloudSQLConnection-136"><span class="linenos">136</span></a>        <span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-</span><span id="CloudSQLConnection-137"><a href="#CloudSQLConnection-137"><span class="linenos">137</span></a>
-</span><span id="CloudSQLConnection-138"><a href="#CloudSQLConnection-138"><span class="linenos">138</span></a>        <span class="k">yield</span> <span class="n">connection</span>
-</span><span id="CloudSQLConnection-139"><a href="#CloudSQLConnection-139"><span class="linenos">139</span></a>
-</span><span id="CloudSQLConnection-140"><a href="#CloudSQLConnection-140"><span class="linenos">140</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="CloudSQLConnection-132"><a href="#CloudSQLConnection-132"><span class="linenos">132</span></a><span class="k">class</span> <span class="nc">CloudSQLConnection</span><span class="p">(</span><span class="n">PostgresConnection</span><span class="p">):</span>
+</span><span id="CloudSQLConnection-133"><a href="#CloudSQLConnection-133"><span class="linenos">133</span></a>    <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="CloudSQLConnection-134"><a href="#CloudSQLConnection-134"><span class="linenos">134</span></a><span class="sd">    Opens up a connection to a GCP Cloud SQL instance.</span>
+</span><span id="CloudSQLConnection-135"><a href="#CloudSQLConnection-135"><span class="linenos">135</span></a><span class="sd">    </span>
+</span><span id="CloudSQLConnection-136"><a href="#CloudSQLConnection-136"><span class="linenos">136</span></a><span class="sd">    args:</span>
+</span><span id="CloudSQLConnection-137"><a href="#CloudSQLConnection-137"><span class="linenos">137</span></a><span class="sd">        project: the name of the google cloud project to connect to.</span>
+</span><span id="CloudSQLConnection-138"><a href="#CloudSQLConnection-138"><span class="linenos">138</span></a><span class="sd">        username: username to use to connect to the instance</span>
+</span><span id="CloudSQLConnection-139"><a href="#CloudSQLConnection-139"><span class="linenos">139</span></a><span class="sd">        gcp_password_secret: the name of the GCP secret manager secret</span>
+</span><span id="CloudSQLConnection-140"><a href="#CloudSQLConnection-140"><span class="linenos">140</span></a><span class="sd">            containing the password associated with the given username.</span>
+</span><span id="CloudSQLConnection-141"><a href="#CloudSQLConnection-141"><span class="linenos">141</span></a><span class="sd">            NOT the actual password.</span>
+</span><span id="CloudSQLConnection-142"><a href="#CloudSQLConnection-142"><span class="linenos">142</span></a><span class="sd">        port: the Cloud SQL instance&#39;s port</span>
+</span><span id="CloudSQLConnection-143"><a href="#CloudSQLConnection-143"><span class="linenos">143</span></a><span class="sd">        db: the database to connect to (often just &quot;postgres&quot;)</span>
+</span><span id="CloudSQLConnection-144"><a href="#CloudSQLConnection-144"><span class="linenos">144</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="CloudSQLConnection-145"><a href="#CloudSQLConnection-145"><span class="linenos">145</span></a>
+</span><span id="CloudSQLConnection-146"><a href="#CloudSQLConnection-146"><span class="linenos">146</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+</span><span id="CloudSQLConnection-147"><a href="#CloudSQLConnection-147"><span class="linenos">147</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="CloudSQLConnection-148"><a href="#CloudSQLConnection-148"><span class="linenos">148</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="CloudSQLConnection-149"><a href="#CloudSQLConnection-149"><span class="linenos">149</span></a>        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="CloudSQLConnection-150"><a href="#CloudSQLConnection-150"><span class="linenos">150</span></a>        <span class="n">gcp_password_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cloudsql_postgres_default_password&quot;</span><span class="p">,</span>
+</span><span id="CloudSQLConnection-151"><a href="#CloudSQLConnection-151"><span class="linenos">151</span></a>        <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5432</span><span class="p">,</span>
+</span><span id="CloudSQLConnection-152"><a href="#CloudSQLConnection-152"><span class="linenos">152</span></a>        <span class="n">db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="CloudSQLConnection-153"><a href="#CloudSQLConnection-153"><span class="linenos">153</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="CloudSQLConnection-154"><a href="#CloudSQLConnection-154"><span class="linenos">154</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="CloudSQLConnection-155"><a href="#CloudSQLConnection-155"><span class="linenos">155</span></a>
+</span><span id="CloudSQLConnection-156"><a href="#CloudSQLConnection-156"><span class="linenos">156</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="n">project</span>
+</span><span id="CloudSQLConnection-157"><a href="#CloudSQLConnection-157"><span class="linenos">157</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span> <span class="o">=</span> <span class="n">username</span>
+</span><span id="CloudSQLConnection-158"><a href="#CloudSQLConnection-158"><span class="linenos">158</span></a>
+</span><span id="CloudSQLConnection-159"><a href="#CloudSQLConnection-159"><span class="linenos">159</span></a>        <span class="c1"># set the PostgresConnection class&#39;s password to be the value</span>
+</span><span id="CloudSQLConnection-160"><a href="#CloudSQLConnection-160"><span class="linenos">160</span></a>        <span class="c1"># of the secret in GCP</span>
+</span><span id="CloudSQLConnection-161"><a href="#CloudSQLConnection-161"><span class="linenos">161</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span> <span class="o">=</span> <span class="n">gcp_password_secret</span>
+</span><span id="CloudSQLConnection-162"><a href="#CloudSQLConnection-162"><span class="linenos">162</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span><span class="p">)</span>
+</span><span id="CloudSQLConnection-163"><a href="#CloudSQLConnection-163"><span class="linenos">163</span></a>
+</span><span id="CloudSQLConnection-164"><a href="#CloudSQLConnection-164"><span class="linenos">164</span></a>        <span class="c1"># use CLOUD_SQL_INSTANCE_IP as the env var instead of</span>
+</span><span id="CloudSQLConnection-165"><a href="#CloudSQLConnection-165"><span class="linenos">165</span></a>        <span class="c1"># POSTGRES_INSTANCE_IP</span>
+</span><span id="CloudSQLConnection-166"><a href="#CloudSQLConnection-166"><span class="linenos">166</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CLOUD_SQL_INSTANCE_IP&quot;</span><span class="p">,</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">)</span>
+</span><span id="CloudSQLConnection-167"><a href="#CloudSQLConnection-167"><span class="linenos">167</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span> <span class="o">=</span> <span class="n">port</span>
+</span><span id="CloudSQLConnection-168"><a href="#CloudSQLConnection-168"><span class="linenos">168</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span> <span class="o">=</span> <span class="n">db</span>
 </span></pre></div>
 
 
@@ -617,68 +774,43 @@ to reading the latest version of the secret.</p>
 
     </div>
     <a class="headerlink" href="#CloudSQLConnection.__init__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="CloudSQLConnection.__init__-108"><a href="#CloudSQLConnection.__init__-108"><span class="linenos">108</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-</span><span id="CloudSQLConnection.__init__-109"><a href="#CloudSQLConnection.__init__-109"><span class="linenos">109</span></a>        <span class="bp">self</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.__init__-110"><a href="#CloudSQLConnection.__init__-110"><span class="linenos">110</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.__init__-111"><a href="#CloudSQLConnection.__init__-111"><span class="linenos">111</span></a>        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.__init__-112"><a href="#CloudSQLConnection.__init__-112"><span class="linenos">112</span></a>        <span class="n">gcp_password_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cloudsql_postgres_default_password&quot;</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.__init__-113"><a href="#CloudSQLConnection.__init__-113"><span class="linenos">113</span></a>        <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5432</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.__init__-114"><a href="#CloudSQLConnection.__init__-114"><span class="linenos">114</span></a>        <span class="n">db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.__init__-115"><a href="#CloudSQLConnection.__init__-115"><span class="linenos">115</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="CloudSQLConnection.__init__-116"><a href="#CloudSQLConnection.__init__-116"><span class="linenos">116</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
-</span><span id="CloudSQLConnection.__init__-117"><a href="#CloudSQLConnection.__init__-117"><span class="linenos">117</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CLOUD_SQL_INSTANCE_IP&quot;</span><span class="p">,</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">)</span>
-</span><span id="CloudSQLConnection.__init__-118"><a href="#CloudSQLConnection.__init__-118"><span class="linenos">118</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span> <span class="o">=</span> <span class="n">port</span>
-</span><span id="CloudSQLConnection.__init__-119"><a href="#CloudSQLConnection.__init__-119"><span class="linenos">119</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span> <span class="o">=</span> <span class="n">username</span>
-</span><span id="CloudSQLConnection.__init__-120"><a href="#CloudSQLConnection.__init__-120"><span class="linenos">120</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span> <span class="o">=</span> <span class="n">gcp_password_secret</span>
-</span><span id="CloudSQLConnection.__init__-121"><a href="#CloudSQLConnection.__init__-121"><span class="linenos">121</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span> <span class="o">=</span> <span class="n">db</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="CloudSQLConnection.__init__-146"><a href="#CloudSQLConnection.__init__-146"><span class="linenos">146</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+</span><span id="CloudSQLConnection.__init__-147"><a href="#CloudSQLConnection.__init__-147"><span class="linenos">147</span></a>        <span class="bp">self</span><span class="p">,</span>
+</span><span id="CloudSQLConnection.__init__-148"><a href="#CloudSQLConnection.__init__-148"><span class="linenos">148</span></a>        <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="CloudSQLConnection.__init__-149"><a href="#CloudSQLConnection.__init__-149"><span class="linenos">149</span></a>        <span class="n">username</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="CloudSQLConnection.__init__-150"><a href="#CloudSQLConnection.__init__-150"><span class="linenos">150</span></a>        <span class="n">gcp_password_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cloudsql_postgres_default_password&quot;</span><span class="p">,</span>
+</span><span id="CloudSQLConnection.__init__-151"><a href="#CloudSQLConnection.__init__-151"><span class="linenos">151</span></a>        <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5432</span><span class="p">,</span>
+</span><span id="CloudSQLConnection.__init__-152"><a href="#CloudSQLConnection.__init__-152"><span class="linenos">152</span></a>        <span class="n">db</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span><span class="p">,</span>
+</span><span id="CloudSQLConnection.__init__-153"><a href="#CloudSQLConnection.__init__-153"><span class="linenos">153</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="CloudSQLConnection.__init__-154"><a href="#CloudSQLConnection.__init__-154"><span class="linenos">154</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="CloudSQLConnection.__init__-155"><a href="#CloudSQLConnection.__init__-155"><span class="linenos">155</span></a>
+</span><span id="CloudSQLConnection.__init__-156"><a href="#CloudSQLConnection.__init__-156"><span class="linenos">156</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="n">project</span>
+</span><span id="CloudSQLConnection.__init__-157"><a href="#CloudSQLConnection.__init__-157"><span class="linenos">157</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span> <span class="o">=</span> <span class="n">username</span>
+</span><span id="CloudSQLConnection.__init__-158"><a href="#CloudSQLConnection.__init__-158"><span class="linenos">158</span></a>
+</span><span id="CloudSQLConnection.__init__-159"><a href="#CloudSQLConnection.__init__-159"><span class="linenos">159</span></a>        <span class="c1"># set the PostgresConnection class&#39;s password to be the value</span>
+</span><span id="CloudSQLConnection.__init__-160"><a href="#CloudSQLConnection.__init__-160"><span class="linenos">160</span></a>        <span class="c1"># of the secret in GCP</span>
+</span><span id="CloudSQLConnection.__init__-161"><a href="#CloudSQLConnection.__init__-161"><span class="linenos">161</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span> <span class="o">=</span> <span class="n">gcp_password_secret</span>
+</span><span id="CloudSQLConnection.__init__-162"><a href="#CloudSQLConnection.__init__-162"><span class="linenos">162</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_password</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span><span class="p">)</span>
+</span><span id="CloudSQLConnection.__init__-163"><a href="#CloudSQLConnection.__init__-163"><span class="linenos">163</span></a>
+</span><span id="CloudSQLConnection.__init__-164"><a href="#CloudSQLConnection.__init__-164"><span class="linenos">164</span></a>        <span class="c1"># use CLOUD_SQL_INSTANCE_IP as the env var instead of</span>
+</span><span id="CloudSQLConnection.__init__-165"><a href="#CloudSQLConnection.__init__-165"><span class="linenos">165</span></a>        <span class="c1"># POSTGRES_INSTANCE_IP</span>
+</span><span id="CloudSQLConnection.__init__-166"><a href="#CloudSQLConnection.__init__-166"><span class="linenos">166</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CLOUD_SQL_INSTANCE_IP&quot;</span><span class="p">,</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">)</span>
+</span><span id="CloudSQLConnection.__init__-167"><a href="#CloudSQLConnection.__init__-167"><span class="linenos">167</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span> <span class="o">=</span> <span class="n">port</span>
+</span><span id="CloudSQLConnection.__init__-168"><a href="#CloudSQLConnection.__init__-168"><span class="linenos">168</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span> <span class="o">=</span> <span class="n">db</span>
 </span></pre></div>
 
 
     
 
                             </div>
-                            <div id="CloudSQLConnection.connect" class="classattr">
-                                        <input id="CloudSQLConnection.connect-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-<div class="attr function">
-                    <div class="decorator">@contextlib.contextmanager</div>
-
-        <span class="def">def</span>
-        <span class="name">connect</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>:</span></span>
-
-                <label class="view-source-button" for="CloudSQLConnection.connect-view-source"><span>View Source</span></label>
-
-    </div>
-    <a class="headerlink" href="#CloudSQLConnection.connect"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="CloudSQLConnection.connect-123"><a href="#CloudSQLConnection.connect-123"><span class="linenos">123</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="CloudSQLConnection.connect-124"><a href="#CloudSQLConnection.connect-124"><span class="linenos">124</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="CloudSQLConnection.connect-125"><a href="#CloudSQLConnection.connect-125"><span class="linenos">125</span></a>        <span class="sd">&quot;&quot;&quot;Actually connects to a GCP Cloud SQL instance.&quot;&quot;&quot;</span>
-</span><span id="CloudSQLConnection.connect-126"><a href="#CloudSQLConnection.connect-126"><span class="linenos">126</span></a>
-</span><span id="CloudSQLConnection.connect-127"><a href="#CloudSQLConnection.connect-127"><span class="linenos">127</span></a>        <span class="n">connection</span> <span class="o">=</span> <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span>
-</span><span id="CloudSQLConnection.connect-128"><a href="#CloudSQLConnection.connect-128"><span class="linenos">128</span></a>            <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">URL</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-</span><span id="CloudSQLConnection.connect-129"><a href="#CloudSQLConnection.connect-129"><span class="linenos">129</span></a>                <span class="n">drivername</span><span class="o">=</span><span class="s2">&quot;postgresql+psycopg2&quot;</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.connect-130"><a href="#CloudSQLConnection.connect-130"><span class="linenos">130</span></a>                <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_username</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.connect-131"><a href="#CloudSQLConnection.connect-131"><span class="linenos">131</span></a>                <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_secret</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_password_gcp_secret_name</span><span class="p">),</span>
-</span><span id="CloudSQLConnection.connect-132"><a href="#CloudSQLConnection.connect-132"><span class="linenos">132</span></a>                <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_ip</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.connect-133"><a href="#CloudSQLConnection.connect-133"><span class="linenos">133</span></a>                <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_port</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.connect-134"><a href="#CloudSQLConnection.connect-134"><span class="linenos">134</span></a>                <span class="n">database</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">instance_db</span><span class="p">,</span>
-</span><span id="CloudSQLConnection.connect-135"><a href="#CloudSQLConnection.connect-135"><span class="linenos">135</span></a>            <span class="p">)</span>
-</span><span id="CloudSQLConnection.connect-136"><a href="#CloudSQLConnection.connect-136"><span class="linenos">136</span></a>        <span class="p">)</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
-</span><span id="CloudSQLConnection.connect-137"><a href="#CloudSQLConnection.connect-137"><span class="linenos">137</span></a>
-</span><span id="CloudSQLConnection.connect-138"><a href="#CloudSQLConnection.connect-138"><span class="linenos">138</span></a>        <span class="k">yield</span> <span class="n">connection</span>
-</span><span id="CloudSQLConnection.connect-139"><a href="#CloudSQLConnection.connect-139"><span class="linenos">139</span></a>
-</span><span id="CloudSQLConnection.connect-140"><a href="#CloudSQLConnection.connect-140"><span class="linenos">140</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</span></pre></div>
-
-
-            <div class="docstring"><p>Actually connects to a GCP Cloud SQL instance.</p>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
-                                    <div><dt><a href="#BaseConnection">BaseConnection</a></dt>
+                                    <div><dt><a href="#PostgresConnection">PostgresConnection</a></dt>
+                                <dd id="CloudSQLConnection.connect" class="function"><a href="#PostgresConnection.connect">connect</a></dd>
+
+            </div>
+            <div><dt><a href="#BaseConnection">BaseConnection</a></dt>
                                 <dd id="CloudSQLConnection.get_secret" class="function"><a href="#BaseConnection.get_secret">get_secret</a></dd>
 
             </div>
@@ -696,25 +828,25 @@ to reading the latest version of the secret.</p>
 
     </div>
     <a class="headerlink" href="#BQConnection"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection-143"><a href="#BQConnection-143"><span class="linenos">143</span></a><span class="k">class</span> <span class="nc">BQConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
-</span><span id="BQConnection-144"><a href="#BQConnection-144"><span class="linenos">144</span></a>    <span class="sd">&quot;&quot;&quot;</span>
-</span><span id="BQConnection-145"><a href="#BQConnection-145"><span class="linenos">145</span></a><span class="sd">    Connects to BigQuery using the bigquery client library.</span>
-</span><span id="BQConnection-146"><a href="#BQConnection-146"><span class="linenos">146</span></a>
-</span><span id="BQConnection-147"><a href="#BQConnection-147"><span class="linenos">147</span></a><span class="sd">    args:</span>
-</span><span id="BQConnection-148"><a href="#BQConnection-148"><span class="linenos">148</span></a><span class="sd">        project (str): The GCP project containing the BigQuery instance we want </span>
-</span><span id="BQConnection-149"><a href="#BQConnection-149"><span class="linenos">149</span></a><span class="sd">            to connect to.</span>
-</span><span id="BQConnection-150"><a href="#BQConnection-150"><span class="linenos">150</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="BQConnection-151"><a href="#BQConnection-151"><span class="linenos">151</span></a>
-</span><span id="BQConnection-152"><a href="#BQConnection-152"><span class="linenos">152</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="BQConnection-153"><a href="#BQConnection-153"><span class="linenos">153</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
-</span><span id="BQConnection-154"><a href="#BQConnection-154"><span class="linenos">154</span></a>
-</span><span id="BQConnection-155"><a href="#BQConnection-155"><span class="linenos">155</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="BQConnection-156"><a href="#BQConnection-156"><span class="linenos">156</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="BQConnection-157"><a href="#BQConnection-157"><span class="linenos">157</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
-</span><span id="BQConnection-158"><a href="#BQConnection-158"><span class="linenos">158</span></a>
-</span><span id="BQConnection-159"><a href="#BQConnection-159"><span class="linenos">159</span></a>        <span class="k">yield</span> <span class="n">client</span>
-</span><span id="BQConnection-160"><a href="#BQConnection-160"><span class="linenos">160</span></a>
-</span><span id="BQConnection-161"><a href="#BQConnection-161"><span class="linenos">161</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection-171"><a href="#BQConnection-171"><span class="linenos">171</span></a><span class="k">class</span> <span class="nc">BQConnection</span><span class="p">(</span><span class="n">BaseConnection</span><span class="p">):</span>
+</span><span id="BQConnection-172"><a href="#BQConnection-172"><span class="linenos">172</span></a>    <span class="sd">&quot;&quot;&quot;</span>
+</span><span id="BQConnection-173"><a href="#BQConnection-173"><span class="linenos">173</span></a><span class="sd">    Connects to BigQuery using the bigquery client library.</span>
+</span><span id="BQConnection-174"><a href="#BQConnection-174"><span class="linenos">174</span></a>
+</span><span id="BQConnection-175"><a href="#BQConnection-175"><span class="linenos">175</span></a><span class="sd">    args:</span>
+</span><span id="BQConnection-176"><a href="#BQConnection-176"><span class="linenos">176</span></a><span class="sd">        project (str): The GCP project containing the BigQuery instance we want </span>
+</span><span id="BQConnection-177"><a href="#BQConnection-177"><span class="linenos">177</span></a><span class="sd">            to connect to.</span>
+</span><span id="BQConnection-178"><a href="#BQConnection-178"><span class="linenos">178</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="BQConnection-179"><a href="#BQConnection-179"><span class="linenos">179</span></a>
+</span><span id="BQConnection-180"><a href="#BQConnection-180"><span class="linenos">180</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="BQConnection-181"><a href="#BQConnection-181"><span class="linenos">181</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="BQConnection-182"><a href="#BQConnection-182"><span class="linenos">182</span></a>
+</span><span id="BQConnection-183"><a href="#BQConnection-183"><span class="linenos">183</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="BQConnection-184"><a href="#BQConnection-184"><span class="linenos">184</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="BQConnection-185"><a href="#BQConnection-185"><span class="linenos">185</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+</span><span id="BQConnection-186"><a href="#BQConnection-186"><span class="linenos">186</span></a>
+</span><span id="BQConnection-187"><a href="#BQConnection-187"><span class="linenos">187</span></a>        <span class="k">yield</span> <span class="n">client</span>
+</span><span id="BQConnection-188"><a href="#BQConnection-188"><span class="linenos">188</span></a>
+</span><span id="BQConnection-189"><a href="#BQConnection-189"><span class="linenos">189</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </span></pre></div>
 
 
@@ -736,8 +868,8 @@ to reading the latest version of the secret.</p>
 
     </div>
     <a class="headerlink" href="#BQConnection.__init__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection.__init__-152"><a href="#BQConnection.__init__-152"><span class="linenos">152</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="BQConnection.__init__-153"><a href="#BQConnection.__init__-153"><span class="linenos">153</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection.__init__-180"><a href="#BQConnection.__init__-180"><span class="linenos">180</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="BQConnection.__init__-181"><a href="#BQConnection.__init__-181"><span class="linenos">181</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -756,13 +888,13 @@ to reading the latest version of the secret.</p>
 
     </div>
     <a class="headerlink" href="#BQConnection.connect"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection.connect-155"><a href="#BQConnection.connect-155"><span class="linenos">155</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="BQConnection.connect-156"><a href="#BQConnection.connect-156"><span class="linenos">156</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="BQConnection.connect-157"><a href="#BQConnection.connect-157"><span class="linenos">157</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
-</span><span id="BQConnection.connect-158"><a href="#BQConnection.connect-158"><span class="linenos">158</span></a>
-</span><span id="BQConnection.connect-159"><a href="#BQConnection.connect-159"><span class="linenos">159</span></a>        <span class="k">yield</span> <span class="n">client</span>
-</span><span id="BQConnection.connect-160"><a href="#BQConnection.connect-160"><span class="linenos">160</span></a>
-</span><span id="BQConnection.connect-161"><a href="#BQConnection.connect-161"><span class="linenos">161</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection.connect-183"><a href="#BQConnection.connect-183"><span class="linenos">183</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="BQConnection.connect-184"><a href="#BQConnection.connect-184"><span class="linenos">184</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="BQConnection.connect-185"><a href="#BQConnection.connect-185"><span class="linenos">185</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+</span><span id="BQConnection.connect-186"><a href="#BQConnection.connect-186"><span class="linenos">186</span></a>
+</span><span id="BQConnection.connect-187"><a href="#BQConnection.connect-187"><span class="linenos">187</span></a>        <span class="k">yield</span> <span class="n">client</span>
+</span><span id="BQConnection.connect-188"><a href="#BQConnection.connect-188"><span class="linenos">188</span></a>
+</span><span id="BQConnection.connect-189"><a href="#BQConnection.connect-189"><span class="linenos">189</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </span></pre></div>
 
 

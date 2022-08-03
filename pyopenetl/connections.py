@@ -24,7 +24,7 @@ class BaseConnection:
         """
         Reads a given secret from a GCP project's Secret Manager API. Defaults
         to reading the latest version of the secret.
-        
+
         args:
             secret_name (str): The full name of the secret being accessed.
         """
@@ -42,6 +42,10 @@ class BaseConnection:
 class PostgresConnection(BaseConnection):
     """
     Connect to a generic postgres instance.
+        stream_results: whether or not the SQLAlchemy engine object should add the
+            stream_results execution option. this should only be enabled when you
+            are reading from a database -- trying to write with this option set
+            will result in a somewhat cryptic cursor-related error.
     """
 
     def __init__(
@@ -50,27 +54,33 @@ class PostgresConnection(BaseConnection):
         password: str = "",
         port: int = 5432,
         db: str = "postgres",
+        stream_results: bool = False,
     ) -> None:
         self.instance_ip = os.environ.get("POSTGRES_INSTANCE_IP", "127.0.0.1")
         self.instance_port = port
         self.instance_username = username
         self.instance_password = password
         self.instance_db = db
+        self.stream_results = stream_results
 
     @contextlib.contextmanager
     def connect(self) -> Generator[sqlalchemy.engine.Engine, None, None]:
         """Actually connects to a generic postgresql instance."""
 
-        connection = sqlalchemy.create_engine(
-            sqlalchemy.engine.url.URL.create(
-                drivername="postgresql+psycopg2",
-                username=self.instance_username,
-                password=self.instance_password,
-                host=self.instance_ip,
-                port=self.instance_port,
-                database=self.instance_db,
+        connection = (
+            sqlalchemy.create_engine(
+                sqlalchemy.engine.url.URL.create(
+                    drivername="postgresql+psycopg2",
+                    username=self.instance_username,
+                    password=self.instance_password,
+                    host=self.instance_ip,
+                    port=self.instance_port,
+                    database=self.instance_db,
+                )
             )
-        ).connect()
+            .connect()
+            .execution_options(stream_results=self.stream_results)
+        )
 
         yield connection
 
@@ -80,7 +90,7 @@ class PostgresConnection(BaseConnection):
 class HerokuConnection(BaseConnection):
     """
     Opens up a connection to a Heroku-managed Postgres instance.
-    
+
     args:
         project (str): the name of the cloud environment project (GCP, AWS, etc.)
             to map to the Heroku Postgres instance name.
@@ -114,14 +124,11 @@ class HerokuConnection(BaseConnection):
         Connects to a Heroku postgres environment instance.
         """
 
-        if self.stream_results:
-            connection = (
-                sqlalchemy.create_engine(self.db_url)
-                .connect()
-                .execution_options(stream_results=True)
-            )
-        else:
-            connection = sqlalchemy.create_engine(self.db_url).connect()
+        connection = (
+            sqlalchemy.create_engine(self.db_url)
+            .connect()
+            .execution_options(stream_results=self.stream_results)
+        )
 
         yield connection
 
@@ -131,7 +138,7 @@ class HerokuConnection(BaseConnection):
 class CloudSQLConnection(PostgresConnection):
     """
     Opens up a connection to a GCP Cloud SQL instance.
-    
+
     args:
         project: the name of the google cloud project to connect to.
         username: username to use to connect to the instance
@@ -172,7 +179,7 @@ class BQConnection(BaseConnection):
     Connects to BigQuery using the bigquery client library.
 
     args:
-        project (str): The GCP project containing the BigQuery instance we want 
+        project (str): The GCP project containing the BigQuery instance we want
             to connect to.
     """
 

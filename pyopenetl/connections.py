@@ -54,7 +54,7 @@ class PostgresConnection(BaseConnection):
         password: str = "",
         port: int = 5432,
         db: str = "postgres",
-        stream_results: bool = True
+        stream_results: bool = False,
     ) -> None:
         self.instance_ip = os.environ.get("POSTGRES_INSTANCE_IP", "127.0.0.1")
         self.instance_port = port
@@ -67,25 +67,8 @@ class PostgresConnection(BaseConnection):
     def connect(self) -> Generator[sqlalchemy.engine.Engine, None, None]:
         """Actually connects to a generic postgresql instance."""
 
-        if self.stream_results:
-
-            connection = (
-                sqlalchemy.create_engine(
-                    sqlalchemy.engine.url.URL.create(
-                        drivername="postgresql+psycopg2",
-                        username=self.instance_username,
-                        password=self.instance_password,
-                        host=self.instance_ip,
-                        port=self.instance_port,
-                        database=self.instance_db,
-                    )
-                )
-                .connect()
-                .execution_options(stream_results=True)
-            )
-
-        else:
-            connection = sqlalchemy.create_engine(
+        connection = (
+            sqlalchemy.create_engine(
                 sqlalchemy.engine.url.URL.create(
                     drivername="postgresql+psycopg2",
                     username=self.instance_username,
@@ -94,7 +77,10 @@ class PostgresConnection(BaseConnection):
                     port=self.instance_port,
                     database=self.instance_db,
                 )
-            ).connect()
+            )
+            .connect()
+            .execution_options(stream_results=self.stream_results)
+        )
 
         yield connection
 
@@ -138,14 +124,11 @@ class HerokuConnection(BaseConnection):
         Connects to a Heroku postgres environment instance.
         """
 
-        if self.stream_results:
-            connection = (
-                sqlalchemy.create_engine(self.db_url)
-                .connect()
-                .execution_options(stream_results=True)
-            )
-        else:
-            connection = sqlalchemy.create_engine(self.db_url).connect()
+        connection = (
+            sqlalchemy.create_engine(self.db_url)
+            .connect()
+            .execution_options(stream_results=self.stream_results)
+        )
 
         yield connection
 

@@ -54,13 +54,14 @@ class PostgresConnection(BaseConnection):
         password: str = "",
         port: int = 5432,
         db: str = "postgres",
-        stream_results: bool = True,
+        stream_results: bool = True
     ) -> None:
         self.instance_ip = os.environ.get("POSTGRES_INSTANCE_IP", "127.0.0.1")
         self.instance_port = port
         self.instance_username = username
         self.instance_password = password
         self.instance_db = db
+        self.stream_results = stream_results
 
     @contextlib.contextmanager
     def connect(self) -> Generator[sqlalchemy.engine.Engine, None, None]:

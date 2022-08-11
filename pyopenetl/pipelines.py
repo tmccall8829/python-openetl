@@ -107,15 +107,12 @@ class UpdatePipeline(BasePipeline):
             data_interval_hours: the number of previous hours' worth of data to upsert
             primary_key: the primary key of the read and write tables (must match)
         """
-        try:
-            return self.output.update_table_via_upsert(
-                read_table=read_table,
-                data_interval_hours=data_interval_hours,
-                write_table=write_table,
-                write_table_primary_key=primary_key,
-            )
-        except Exception as err:
-            return f"Unable to update table {read_table} as {write_table}: {err}"
+        return self.output.update_table_via_upsert(
+            read_table=read_table,
+            data_interval_hours=data_interval_hours,
+            write_table=write_table,
+            write_table_primary_key=primary_key,
+        )
 
 
 class CrunchbaseFlatfilePipeline(BasePipeline):

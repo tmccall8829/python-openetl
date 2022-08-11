@@ -340,73 +340,74 @@ class CloudSQLWriter(BaseWriter):
             write_table: the name of the table we'll be upserting the data into
             write_table_primary_key: the primary key of the write_table
         """
-        with self.dest_conn.connect() as read_conn:
+        with self.source_conn.connect() as read_conn:
             write_time = datetime.datetime.now(datetime.timezone.utc)
-
-            temp_write_table = f"{write_table}_temp"
 
             # read from postgres and write the temp table
             delta_query = f"SELECT * FROM {read_table} WHERE updated_at >= (NOW() - INTERVAL'{data_interval_hours} hours')"
             df = pd.read_sql(delta_query, read_conn)
 
-            nrows = int(df.shape[0])
-            table_cols = list(df.columns)
+        nrows = int(df.shape[0])
 
-            if nrows != 0:
-                self.create_table_from_dataframe(temp_write_table, df)
+        if nrows != 0:
+            temp_write_table = f"{write_table}_temp"
+            self.create_table_from_dataframe(temp_write_table, df)
 
-                self.write_from_dataframe(temp_write_table, df)
+            self.write_from_dataframe(temp_write_table, df)
 
-                try:
-                    with self.dest_conn.connect() as write_conn:
-                        write_conn.execute(
-                            f"""
-                            INSERT INTO {write_table} 
-                            SELECT * FROM {temp_write_table}
-                            ON CONFLICT ({write_table_primary_key}) DO
-                                UPDATE SET {self.gen_update_set_parms("EXCLUDED", table_cols, write_table_primary_key)}
-                            """
+            try:
+                with self.dest_conn.connect() as write_conn:
+                    table_cols = list(df.columns)
+                    write_conn.execute(
+                        f"""
+                        INSERT INTO {write_table} 
+                        SELECT * FROM {temp_write_table}
+                        ON CONFLICT ({write_table_primary_key}) DO
+                            UPDATE SET {self.gen_update_set_parms("EXCLUDED", table_cols, write_table_primary_key)}
+                        """
+                    )
+            except Exception as err:
+                raise RuntimeError(f"Error upserting temp table: {err}") from err
+            finally:
+                self.delete_table(temp_write_table)
+
+        # now, as part of the upsert process, remove any rows from our projection that have been removed from the source
+        # this is NOT dependent upon there being any new data to upsert
+        def _get_projection_ids(conn, table):
+            res = conn.execute(f"SELECT id FROM {table}")
+            employment_ids = set([i[0] for i in res.all()])
+
+            return employment_ids
+
+        def _get_projection_ids_to_remove():
+            with self.dest_conn.connect() as dest:
+                with self.source_conn.connect() as source:
+                    ids = (
+                        _get_projection_ids(dest, read_table),
+                        _get_projection_ids(source, write_table),
+                    )
+                    deleted_ids = ids[0].difference(ids[1])
+                    for i in deleted_ids:
+                        res = source.execute(
+                            f"SELECT id FROM {read_table} WHERE id = {i}"
                         )
-                except Exception as err:
-                    raise RuntimeError(f"Error upserting temp table: {err}") from err
-                finally:
-                    self.delete_table(temp_write_table)
+                        if len(res.all()) != 0:
+                            deleted_ids.remove(i)
 
-            # now, as part of the upsert process, remove any rows from our projection that have been removed from the source
-            # this is NOT dependent upon there being any new data to upsert
-            def _get_projection_ids(conn, table):
-                res = conn.execute(f"SELECT id FROM {table}")
-                employment_ids = set([i[0] for i in res.all()])
+            return deleted_ids
 
-                return employment_ids
-
-            def _get_projection_ids_to_remove():
-                with self.dest_conn.connect() as dest:
-                    with self.source_conn.connect() as source:
-                        ids = (
-                            _get_projection_ids(dest, read_table),
-                            _get_projection_ids(source, write_table),
+        ids_to_remove = _get_projection_ids_to_remove()
+        if len(ids_to_remove) > 0:
+            with self.dest_conn.connect() as dest:
+                # make SUPER sure we don't delete anything from Heroku PG
+                if isinstance(self.dest_conn, HerokuConnection):
+                    print(f"Cannot delete rows from Heroku PG. Exiting.")
+                else:
+                    dest.execute(
+                        f"DELETE FROM {write_table} WHERE id IN {tuple(ids_to_remove)}".replace(
+                            ",)", ")"
                         )
-                        deleted_ids = ids[0].difference(ids[1])
-                        for i in deleted_ids:
-                            res = source.execute(
-                                f"SELECT id FROM {read_table} WHERE id = {i}"
-                            )
-                            if len(res.all()) != 0:
-                                deleted_ids.remove(i)
-
-                return deleted_ids
-
-            ids_to_remove = _get_projection_ids_to_remove()
-            if len(ids_to_remove) > 0:
-                with self.dest_conn.connect() as dest:
-                    # make SUPER sure we don't delete anything from Heroku PG
-                    if isinstance(self.dest_conn, HerokuConnection):
-                        print(f"Cannot delete rows from Heroku PG. Exiting.")
-                    else:
-                        dest.execute(
-                            f"DELETE FROM {write_table} WHERE id IN {tuple(ids_to_remove)}"
-                        )
+                    )
 
         return f"{write_table}: +{nrows} -{len(ids_to_remove)} in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
 

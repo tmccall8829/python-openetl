@@ -180,6 +180,60 @@ class BaseWriter:
         print(f"SQL executed in {datetime.datetime.now() - start}")
         return res
 
+    def get_postgres_dtypes_for_temp_table(self, table: str) -> dict:
+        """
+        Turns a SQL table's schema into a dictionary of column names to SQLAlchemy types.
+        
+        args:
+            table: name of the table schema to read
+        """
+
+        def _string_types_to_sqlachemy_types(str_type):
+            type_mapping = {
+                "ARRAY": sqlalchemy.dialects.postgresql.ARRAY,
+                "bigint": sqlalchemy.dialects.postgresql.BIGINT,
+                "boolean": sqlalchemy.dialects.postgresql.BOOLEAN,
+                "character varying": sqlalchemy.dialects.postgresql.VARCHAR,
+                "date": sqlalchemy.dialects.postgresql.DATE,
+                "double precision": sqlalchemy.dialects.postgresql.DOUBLE_PRECISION,
+                "inet": sqlalchemy.dialects.postgresql.INET,
+                "integer": sqlalchemy.dialects.postgresql.INTEGER,
+                "jsonb": sqlalchemy.dialects.postgresql.JSONB,
+                "bytea": sqlalchemy.dialects.postgresql.BYTEA,
+                "numeric": sqlalchemy.dialects.postgresql.NUMERIC,
+                "smallint": sqlalchemy.dialects.postgresql.SMALLINT,
+                "timestamp with time zone": sqlalchemy.dialects.postgresql.TSTZRANGE,
+                "text": sqlalchemy.dialects.postgresql.TEXT,
+                "timestamp without time zone": sqlalchemy.dialects.postgresql.TIMESTAMP,
+            }
+            try:
+                type_to_return = type_mapping[str_type]
+            except:
+                raise ValueError(
+                    f"Unable to map type: {str_type}. Does it exist in type_mappings?"
+                )
+
+            return type_to_return
+
+        with self.dest_conn.connect() as conn:
+            res = conn.execute(
+                f"""
+                SELECT
+                    column_name,
+                    data_type
+                FROM
+                    information_schema.columns
+                WHERE
+                    table_name = '{table}';
+                """
+            )
+            cols_to_types = res.all()
+            dtypes = {
+                i[0]: _string_types_to_sqlachemy_types(i[1]) for i in cols_to_types
+            }
+
+        return dtypes
+
 
 class CloudSQLWriter(BaseWriter):
     """
@@ -351,7 +405,8 @@ class CloudSQLWriter(BaseWriter):
 
         if nrows != 0:
             temp_write_table = f"{write_table}_temp"
-            self.create_table_from_dataframe(temp_write_table, df)
+            dtypes = self.get_postgres_dtypes_for_temp_table(write_table)
+            self.create_table_from_dataframe(temp_write_table, df, dtypes=dtypes)
 
             self.write_from_dataframe(temp_write_table, df)
 

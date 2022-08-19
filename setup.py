@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION = "1.0.11"
+VERSION = "1.0.12"
 
 setup(
     name="python-openetl",

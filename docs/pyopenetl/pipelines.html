@@ -195,7 +195,7 @@
 </span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a>        <span class="n">write_table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a>        <span class="n">data_interval_hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 </span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a>        <span class="n">primary_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span>
-</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a>    <span class="p">):</span>
+</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a>        <span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a><span class="sd">        Starts the table upserting process using the source and destination connections.</span>
 </span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a>
@@ -472,7 +472,7 @@ from the source to the destination.</p>
 </span><span id="UpdatePipeline-98"><a href="#UpdatePipeline-98"><span class="linenos"> 98</span></a>        <span class="n">write_table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="UpdatePipeline-99"><a href="#UpdatePipeline-99"><span class="linenos"> 99</span></a>        <span class="n">data_interval_hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 </span><span id="UpdatePipeline-100"><a href="#UpdatePipeline-100"><span class="linenos">100</span></a>        <span class="n">primary_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span>
-</span><span id="UpdatePipeline-101"><a href="#UpdatePipeline-101"><span class="linenos">101</span></a>    <span class="p">):</span>
+</span><span id="UpdatePipeline-101"><a href="#UpdatePipeline-101"><span class="linenos">101</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span><span id="UpdatePipeline-102"><a href="#UpdatePipeline-102"><span class="linenos">102</span></a>        <span class="sd">&quot;&quot;&quot;</span>
 </span><span id="UpdatePipeline-103"><a href="#UpdatePipeline-103"><span class="linenos">103</span></a><span class="sd">        Starts the table upserting process using the source and destination connections.</span>
 </span><span id="UpdatePipeline-104"><a href="#UpdatePipeline-104"><span class="linenos">104</span></a>
@@ -531,7 +531,7 @@ from the source to the destination.</p>
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">execute</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">read_table</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">write_table</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">data_interval_hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>,</span><span class="param">	<span class="n">primary_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;id&#39;</span></span>)</span>
+        <span class="name">execute</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">read_table</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">write_table</span><span class="p">:</span> <span class="nb">str</span>,</span><span class="param">	<span class="n">data_interval_hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>,</span><span class="param">	<span class="n">primary_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;id&#39;</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span>
 
                 <label class="view-source-button" for="UpdatePipeline.execute-view-source"><span>View Source</span></label>
 
@@ -543,7 +543,7 @@ from the source to the destination.</p>
 </span><span id="UpdatePipeline.execute-98"><a href="#UpdatePipeline.execute-98"><span class="linenos"> 98</span></a>        <span class="n">write_table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="UpdatePipeline.execute-99"><a href="#UpdatePipeline.execute-99"><span class="linenos"> 99</span></a>        <span class="n">data_interval_hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 </span><span id="UpdatePipeline.execute-100"><a href="#UpdatePipeline.execute-100"><span class="linenos">100</span></a>        <span class="n">primary_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;id&quot;</span><span class="p">,</span>
-</span><span id="UpdatePipeline.execute-101"><a href="#UpdatePipeline.execute-101"><span class="linenos">101</span></a>    <span class="p">):</span>
+</span><span id="UpdatePipeline.execute-101"><a href="#UpdatePipeline.execute-101"><span class="linenos">101</span></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span><span id="UpdatePipeline.execute-102"><a href="#UpdatePipeline.execute-102"><span class="linenos">102</span></a>        <span class="sd">&quot;&quot;&quot;</span>
 </span><span id="UpdatePipeline.execute-103"><a href="#UpdatePipeline.execute-103"><span class="linenos">103</span></a><span class="sd">        Starts the table upserting process using the source and destination connections.</span>
 </span><span id="UpdatePipeline.execute-104"><a href="#UpdatePipeline.execute-104"><span class="linenos">104</span></a>

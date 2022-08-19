@@ -97,7 +97,7 @@ class UpdatePipeline(BasePipeline):
         write_table: str,
         data_interval_hours: int = 1,
         primary_key: str = "id",
-    ):
+    ) -> str:
         """
         Starts the table upserting process using the source and destination connections.
 

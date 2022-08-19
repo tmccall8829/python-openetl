@@ -2,6 +2,7 @@ import csv
 import datetime
 import gc
 import io
+import json
 import requests
 import tarfile
 from typing import Generator, Union
@@ -395,7 +396,7 @@ class CloudSQLWriter(BaseWriter):
             write_table_primary_key: the primary key of the write_table
         """
         with self.source_conn.connect() as read_conn:
-            write_time = datetime.datetime.now(datetime.timezone.utc)
+            write_time = datetime.datetime.now()
 
             # read from postgres and write the temp table
             delta_query = f"SELECT * FROM {read_table} WHERE updated_at >= (NOW() - INTERVAL'{data_interval_hours} hours')"
@@ -464,7 +465,15 @@ class CloudSQLWriter(BaseWriter):
                         )
                     )
 
-        return f"{write_table}: +{nrows} -{len(ids_to_remove)} in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
+        return json.dumps(
+            {
+                "table_name": write_table,
+                "rows_added": nrows,
+                "rows_deleted": len(ids_to_remove),
+                "execution_duration": datetime.datetime.now() - write_time,
+                "execution_date": write_time,
+            }
+        )
 
     def gen_update_set_parms(
         self, merging_in: str, table_cols: list, primary_key_id: str

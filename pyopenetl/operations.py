@@ -470,8 +470,8 @@ class CloudSQLWriter(BaseWriter):
                 "table_name": write_table,
                 "rows_added": nrows,
                 "rows_deleted": len(ids_to_remove),
-                "execution_duration": datetime.datetime.now() - write_time,
-                "execution_date": write_time,
+                "execution_duration": str(datetime.datetime.now() - write_time),
+                "execution_date": str(write_time),
             }
         )
 

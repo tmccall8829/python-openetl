@@ -257,7 +257,7 @@ class CloudSQLWriter(BaseWriter):
         super().__init__(source_conn, dest_conn)
 
     def create_table_from_dataframe(
-        self, table: str, df: pd.DataFrame, dtypes: dict = {}, primary_key: str = "id"
+        self, table: str, df: pd.DataFrame, dtypes: dict = {}, primary_key: str = "id",
     ) -> None:
         """
         Creates an empty table with the correct column names and types.
@@ -304,7 +304,38 @@ class CloudSQLWriter(BaseWriter):
         with self.dest_conn.connect() as cloud_sql_conn:
             print(f"--> Deleting table {table}")
             cloud_sql_conn.execute(f"DROP TABLE IF EXISTS {table}")
+    def get_indices_from_heroku(self, read_table: str, write_table: str) -> str:
+        """
+        Reads the index commands from the source heroku table, and returns a command to run on the destination table.
 
+        args:
+            read_table: the name of the heroku table being read from
+            write_table: the name of the Cloud SQL table we write to
+        """
+
+        # Query to get indices from read_table
+        data_to_resolve_query = f"""SELECT
+                                tablename,
+                                indexname,
+                                indexdef
+                            FROM
+                                pg_indexes
+                            WHERE
+                                schemaname = 'public' AND
+                                tablename = '{read_table}'
+                            ORDER BY
+                                tablename,
+                                indexname;"""
+        with self.source_conn.connect() as conn:
+            index_df = pd.read_sql(data_to_resolve_query, conn)
+
+        final_query_str = ""
+        # Clean the index queries and concatenate them into one nice (long) query
+        for query in index_df['indexdef']:
+            tempstr = query.replace(f"ON public.{read_table}", f"ON {write_table}")
+            final_query_str += tempstr
+            final_query_str += "; \n"
+        return final_query_str
     def seed_table(self, read_table: str, read_chunksize: int, write_table: str) -> str:
         """
         Seeds a direct projection of a table from one DB source to another. Note that 
@@ -330,7 +361,7 @@ class CloudSQLWriter(BaseWriter):
             if its == 1:
                 # write to (an optionally different) table name in Cloud SQL
                 print(f"--> Creating new table {write_table} in Cloud SQL")
-                self.create_table_from_dataframe(write_table, df)
+                self.create_table_from_dataframe(write_table, df, dtypes=self.get_postgres_dtypes_for_temp_table(read_table))
 
             try:
                 self.write_from_dataframe(
@@ -344,6 +375,10 @@ class CloudSQLWriter(BaseWriter):
             gc.collect()
 
             its += 1
+        index_creation_query = self.get_indices_from_heroku(read_table=read_table, write_table=write_table)
+        with self.dest_conn.connect() as cloud_sql_conn:
+            # in order to do upserts later, each table needs to have a unique constraint on the primary key
+            cloud_sql_conn.execute(index_creation_query)
 
         return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
 

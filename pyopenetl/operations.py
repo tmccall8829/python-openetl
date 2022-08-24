@@ -32,7 +32,7 @@ class BaseReader:
     ) -> Generator[pd.DataFrame, None, None]:
         """
         Yields a generator that reads chunks from a SQL table into a dataframe.
-        
+
         args:
             table: the name of the table to read into a dataframe
             chunksize: the number of rows to read in at a time
@@ -72,7 +72,7 @@ class CloudSQLReader(BaseReader):
 
 class BaseWriter:
     """
-    Takes a source connection and a destination connection object and provides methods for 
+    Takes a source connection and a destination connection object and provides methods for
     writing data between the two.
 
     args:
@@ -99,7 +99,10 @@ class BaseWriter:
         return df
 
     def write_from_dataframe(
-        self, table: str, df: pd.DataFrame, chunksize: int = 100_000_000,
+        self,
+        table: str,
+        df: pd.DataFrame,
+        chunksize: int = 100_000_000,
     ) -> str:
         """
         Writes a pandas dataframe to a given SQL table. Note that this assumes that the
@@ -109,7 +112,7 @@ class BaseWriter:
         args:
             table: the name of the pre-existing table to write out to
             df: the data to write
-            chunksize: the number of rows to write out at once. default to large enough 
+            chunksize: the number of rows to write out at once. default to large enough
                 to write the whole df at once.
         """
 
@@ -168,7 +171,7 @@ class BaseWriter:
         makes no attempt to validate the SQL being sent to the destination
         connection, so do not use this method in a context involving user
         input.
-        
+
         """
 
         if use_textual:
@@ -181,10 +184,10 @@ class BaseWriter:
         print(f"SQL executed in {datetime.datetime.now() - start}")
         return res
 
-    def get_postgres_dtypes_for_temp_table(self, table: str) -> dict:
+    def get_postgres_table_schema(self, table: str) -> dict:
         """
         Turns a SQL table's schema into a dictionary of column names to SQLAlchemy types.
-        
+
         args:
             table: name of the table schema to read
         """
@@ -257,7 +260,11 @@ class CloudSQLWriter(BaseWriter):
         super().__init__(source_conn, dest_conn)
 
     def create_table_from_dataframe(
-        self, table: str, df: pd.DataFrame, dtypes: dict = {}, primary_key: str = "id",
+        self,
+        table: str,
+        df: pd.DataFrame,
+        dtypes: dict = {},
+        primary_key: str = "id",
     ) -> None:
         """
         Creates an empty table with the correct column names and types.
@@ -281,7 +288,10 @@ class CloudSQLWriter(BaseWriter):
                 )
             else:
                 df.head(0).to_sql(
-                    name=table, con=pd_conn, if_exists="replace", index=False,
+                    name=table,
+                    con=pd_conn,
+                    if_exists="replace",
+                    index=False,
                 )
 
         with self.dest_conn.connect() as cloud_sql_conn:
@@ -297,14 +307,17 @@ class CloudSQLWriter(BaseWriter):
     def delete_table(self, table: str) -> None:
         """
         Drops a table from cloud SQL if it exists.
-        
+
         args:
             table: name of the table to drop
         """
         with self.dest_conn.connect() as cloud_sql_conn:
             print(f"--> Deleting table {table}")
             cloud_sql_conn.execute(f"DROP TABLE IF EXISTS {table}")
-    def get_indices_from_heroku(self, read_table: str, write_table: str) -> str:
+
+    def get_indices_from_heroku(
+        self, read_table: str, write_table: str, schema: str = "public"
+    ) -> str:
         """
         Reads the index commands from the source heroku table, and returns a command to run on the destination table.
 
@@ -321,7 +334,7 @@ class CloudSQLWriter(BaseWriter):
                             FROM
                                 pg_indexes
                             WHERE
-                                schemaname = 'public' AND
+                                schemaname = '{schema}' AND
                                 tablename = '{read_table}'
                             ORDER BY
                                 tablename,
@@ -331,20 +344,21 @@ class CloudSQLWriter(BaseWriter):
 
         final_query_str = ""
         # Clean the index queries and concatenate them into one nice (long) query
-        for query in index_df['indexdef']:
-            tempstr = query.replace(f"ON public.{read_table}", f"ON {write_table}")
+        for query in index_df["indexdef"]:
+            tempstr = query.replace(f"ON {schema}.{read_table}", f"ON {write_table}")
             final_query_str += tempstr
             final_query_str += "; \n"
         return final_query_str
+
     def seed_table(self, read_table: str, read_chunksize: int, write_table: str) -> str:
         """
-        Seeds a direct projection of a table from one DB source to another. Note that 
+        Seeds a direct projection of a table from one DB source to another. Note that
         this DOES create the table before writing, unlike the basic write method.
 
         args:
             read_table: the name of the table to read from
             read_chunksize: the number of rows to read from read_table at a time
-            write_table: the name of the table to write out to cloud SQL. This parameter 
+            write_table: the name of the table to write out to cloud SQL. This parameter
                 allows seed_table() to seed one table (e.g., users) into Cloud SQL under
                 a different name (e.g., users_projection).
         """
@@ -361,7 +375,9 @@ class CloudSQLWriter(BaseWriter):
             if its == 1:
                 # write to (an optionally different) table name in Cloud SQL
                 print(f"--> Creating new table {write_table} in Cloud SQL")
-                self.create_table_from_dataframe(write_table, df, dtypes=self.get_postgres_dtypes_for_temp_table(read_table))
+                self.create_table_from_dataframe(
+                    write_table, df, dtypes=self.get_postgres_table_schema(read_table)
+                )
 
             try:
                 self.write_from_dataframe(
@@ -375,9 +391,10 @@ class CloudSQLWriter(BaseWriter):
             gc.collect()
 
             its += 1
-        index_creation_query = self.get_indices_from_heroku(read_table=read_table, write_table=write_table)
+        index_creation_query = self.get_indices_from_heroku(
+            read_table=read_table, write_table=write_table, schema="public"
+        )
         with self.dest_conn.connect() as cloud_sql_conn:
-            # in order to do upserts later, each table needs to have a unique constraint on the primary key
             cloud_sql_conn.execute(index_creation_query)
 
         return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
@@ -419,7 +436,7 @@ class CloudSQLWriter(BaseWriter):
         write_table_primary_key: str,
     ) -> str:
         """
-        Performs an upsert of a small timeframe of data into a larger table of data with the 
+        Performs an upsert of a small timeframe of data into a larger table of data with the
         same column names and types. Note that this will not work if the table to upsert
         has column names or a column order that does not exactly match that of the table
         it is being upserted into.
@@ -441,7 +458,7 @@ class CloudSQLWriter(BaseWriter):
 
         if nrows != 0:
             temp_write_table = f"{write_table}_temp"
-            dtypes = self.get_postgres_dtypes_for_temp_table(write_table)
+            dtypes = self.get_postgres_table_schema(write_table)
             self.create_table_from_dataframe(temp_write_table, df, dtypes=dtypes)
 
             self.write_from_dataframe(temp_write_table, df)
@@ -515,7 +532,7 @@ class CloudSQLWriter(BaseWriter):
     ) -> str:
         """
         Used to generate the parameters for an ON CONFLICT ... UPDATE SET id = S.id, ..., call.
-        
+
         args:
             merging_in: the name of the table we're merging in
             table_cols: a list of the columns in that table (which must match the
@@ -535,7 +552,7 @@ class CloudSQLWriter(BaseWriter):
 
     def ingest_crunchbase_flatfiles(self) -> str:
         """
-        Uses the crunchbase bulk export API endpoint to download Crunchbase's 
+        Uses the crunchbase bulk export API endpoint to download Crunchbase's
         daily .tar.gz export of CSVs. The CSVs are then loaded into individual
         tables in Cloud SQL.
         """
@@ -591,8 +608,8 @@ class CloudSQLWriter(BaseWriter):
 class HerokuWriter(BaseWriter):
     """
     A Heroku Postgres-specific Writer class with methods that will allow
-    the user to write data out to a Heroku-managed postgres instance. 
-    Note that this class does NOT have methods for creating new tables 
+    the user to write data out to a Heroku-managed postgres instance.
+    Note that this class does NOT have methods for creating new tables
     in Heroku Postgres.
     """
 
@@ -612,13 +629,13 @@ class HerokuWriter(BaseWriter):
         """
         Inserts data (one row or many) into a table and fails if the data
         being inserted conflicts with existing data. This depends on the
-        table being inserted into having a primary key with a unique 
+        table being inserted into having a primary key with a unique
         constraint.
 
         args:
             table: the name of the table to insert data into
             schema (optional): the schema (e.g., postgres) for the table
-            data: the data to insert  
+            data: the data to insert
         """
         start = datetime.datetime.now()
         if isinstance(data, list):

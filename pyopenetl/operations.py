@@ -451,28 +451,7 @@ class CloudSQLWriter(BaseWriter):
 
         nrows = int(df.shape[0])
 
-        if nrows != 0:
-            temp_write_table = f"{write_table}_temp"
-            dtypes = self.get_postgres_dtypes_for_temp_table(write_table)
-            self.create_table_from_dataframe(temp_write_table, df, dtypes=dtypes)
-
-            self.write_from_dataframe(temp_write_table, df)
-
-            try:
-                with self.dest_conn.connect() as write_conn:
-                    table_cols = list(df.columns)
-                    write_conn.execute(
-                        f"""
-                        INSERT INTO {write_table}
-                        SELECT * FROM {temp_write_table}
-                        ON CONFLICT ({write_table_primary_key}) DO
-                            UPDATE SET {self.gen_update_set_parms("EXCLUDED", table_cols, write_table_primary_key)}
-                        """
-                    )
-            except Exception as err:
-                raise RuntimeError(f"Error upserting temp table: {err}") from err
-            finally:
-                self.delete_table(temp_write_table)
+        self.append_rows_to_table_from_dataframe(write_table,write_table_primary_key,df)
 
         # now, as part of the upsert process, remove any rows from our projection that have been removed from the source
         # this is NOT dependent upon there being any new data to upsert

@@ -314,7 +314,7 @@ class CloudSQLWriter(BaseWriter):
         """
 
         # Query to get indices from read_table
-        data_to_resolve_query = f"""SELECT
+        get_table_indices_query = f"""SELECT
                                 tablename,
                                 indexname,
                                 indexdef

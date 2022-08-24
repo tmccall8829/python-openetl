@@ -99,7 +99,10 @@ class BaseWriter:
         return df
 
     def write_from_dataframe(
-        self, table: str, df: pd.DataFrame, chunksize: int = 100_000_000,
+        self,
+        table: str,
+        df: pd.DataFrame,
+        chunksize: int = 100_000_000,
     ) -> str:
         """
         Writes a pandas dataframe to a given SQL table. Note that this assumes that the
@@ -281,7 +284,10 @@ class CloudSQLWriter(BaseWriter):
                 )
             else:
                 df.head(0).to_sql(
-                    name=table, con=pd_conn, if_exists="replace", index=False,
+                    name=table,
+                    con=pd_conn,
+                    if_exists="replace",
+                    index=False,
                 )
 
         with self.dest_conn.connect() as cloud_sql_conn:
@@ -377,10 +383,7 @@ class CloudSQLWriter(BaseWriter):
         return f"Seeded {nrows} rows in {datetime.datetime.now() - start}"
 
     def append_rows_to_table_from_dataframe(
-        self,
-        write_table: str,
-        write_table_primary_key: str,
-        df: pd.Dataframe
+        self, write_table: str, write_table_primary_key: str, df: pd.DataFrame
     ) -> str:
         """
         Appends a set of rows from a dataframe to an existing table with the same schema.
@@ -418,6 +421,7 @@ class CloudSQLWriter(BaseWriter):
             finally:
                 self.delete_table(temp_write_table)
 
+        return f"Appending to Cloud SQL table {write_table} complete in for {nrows}."
 
     def update_table_via_upsert(
         self,

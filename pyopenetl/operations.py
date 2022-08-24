@@ -327,7 +327,7 @@ class CloudSQLWriter(BaseWriter):
         """
 
         # Query to get indices from read_table
-        data_to_resolve_query = f"""SELECT
+        get_table_indices_query = f"""SELECT
                                 tablename,
                                 indexname,
                                 indexdef
@@ -340,7 +340,7 @@ class CloudSQLWriter(BaseWriter):
                                 tablename,
                                 indexname;"""
         with self.source_conn.connect() as conn:
-            index_df = pd.read_sql(data_to_resolve_query, conn)
+            index_df = pd.read_sql(data_to_resolve_query, con=conn)
 
         final_query_str = ""
         # Clean the index queries and concatenate them into one nice (long) query

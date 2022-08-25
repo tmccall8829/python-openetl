@@ -99,10 +99,7 @@ class BaseWriter:
         return df
 
     def write_from_dataframe(
-        self,
-        table: str,
-        df: pd.DataFrame,
-        chunksize: int = 100_000_000,
+        self, table: str, df: pd.DataFrame, chunksize: int = 100_000_000,
     ) -> str:
         """
         Writes a pandas dataframe to a given SQL table. Note that this assumes that the
@@ -284,10 +281,7 @@ class CloudSQLWriter(BaseWriter):
                 )
             else:
                 df.head(0).to_sql(
-                    name=table,
-                    con=pd_conn,
-                    if_exists="replace",
-                    index=False,
+                    name=table, con=pd_conn, if_exists="replace", index=False,
                 )
 
         with self.dest_conn.connect() as cloud_sql_conn:

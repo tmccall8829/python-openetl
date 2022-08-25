@@ -32,7 +32,7 @@ class BaseReader:
     ) -> Generator[pd.DataFrame, None, None]:
         """
         Yields a generator that reads chunks from a SQL table into a dataframe.
-        
+
         args:
             table: the name of the table to read into a dataframe
             chunksize: the number of rows to read in at a time
@@ -72,7 +72,7 @@ class CloudSQLReader(BaseReader):
 
 class BaseWriter:
     """
-    Takes a source connection and a destination connection object and provides methods for 
+    Takes a source connection and a destination connection object and provides methods for
     writing data between the two.
 
     args:
@@ -109,7 +109,7 @@ class BaseWriter:
         args:
             table: the name of the pre-existing table to write out to
             df: the data to write
-            chunksize: the number of rows to write out at once. default to large enough 
+            chunksize: the number of rows to write out at once. default to large enough
                 to write the whole df at once.
         """
 
@@ -168,7 +168,7 @@ class BaseWriter:
         makes no attempt to validate the SQL being sent to the destination
         connection, so do not use this method in a context involving user
         input.
-        
+
         """
 
         if use_textual:
@@ -184,7 +184,7 @@ class BaseWriter:
     def get_postgres_dtypes_for_temp_table(self, table: str) -> dict:
         """
         Turns a SQL table's schema into a dictionary of column names to SQLAlchemy types.
-        
+
         args:
             table: name of the table schema to read
         """
@@ -297,7 +297,7 @@ class CloudSQLWriter(BaseWriter):
     def delete_table(self, table: str) -> None:
         """
         Drops a table from cloud SQL if it exists.
-        
+
         args:
             table: name of the table to drop
         """
@@ -307,13 +307,13 @@ class CloudSQLWriter(BaseWriter):
 
     def seed_table(self, read_table: str, read_chunksize: int, write_table: str) -> str:
         """
-        Seeds a direct projection of a table from one DB source to another. Note that 
+        Seeds a direct projection of a table from one DB source to another. Note that
         this DOES create the table before writing, unlike the basic write method.
 
         args:
             read_table: the name of the table to read from
             read_chunksize: the number of rows to read from read_table at a time
-            write_table: the name of the table to write out to cloud SQL. This parameter 
+            write_table: the name of the table to write out to cloud SQL. This parameter
                 allows seed_table() to seed one table (e.g., users) into Cloud SQL under
                 a different name (e.g., users_projection).
         """
@@ -384,7 +384,7 @@ class CloudSQLWriter(BaseWriter):
         write_table_primary_key: str,
     ) -> str:
         """
-        Performs an upsert of a small timeframe of data into a larger table of data with the 
+        Performs an upsert of a small timeframe of data into a larger table of data with the
         same column names and types. Note that this will not work if the table to upsert
         has column names or a column order that does not exactly match that of the table
         it is being upserted into.
@@ -402,30 +402,9 @@ class CloudSQLWriter(BaseWriter):
             delta_query = f"SELECT * FROM {read_table} WHERE updated_at >= (NOW() - INTERVAL'{data_interval_hours} hours')"
             df = pd.read_sql(delta_query, read_conn)
 
-        nrows = int(df.shape[0])
-
-        if nrows != 0:
-            temp_write_table = f"{write_table}_temp"
-            dtypes = self.get_postgres_dtypes_for_temp_table(write_table)
-            self.create_table_from_dataframe(temp_write_table, df, dtypes=dtypes)
-
-            self.write_from_dataframe(temp_write_table, df)
-
-            try:
-                with self.dest_conn.connect() as write_conn:
-                    table_cols = list(df.columns)
-                    write_conn.execute(
-                        f"""
-                        INSERT INTO {write_table} 
-                        SELECT * FROM {temp_write_table}
-                        ON CONFLICT ({write_table_primary_key}) DO
-                            UPDATE SET {self.gen_update_set_parms("EXCLUDED", table_cols, write_table_primary_key)}
-                        """
-                    )
-            except Exception as err:
-                raise RuntimeError(f"Error upserting temp table: {err}") from err
-            finally:
-                self.delete_table(temp_write_table)
+        self.append_rows_to_table_from_dataframe(
+            write_table, write_table_primary_key, df
+        )
 
         # now, as part of the upsert process, remove any rows from our projection that have been removed from the source
         # this is NOT dependent upon there being any new data to upsert
@@ -480,7 +459,7 @@ class CloudSQLWriter(BaseWriter):
     ) -> str:
         """
         Used to generate the parameters for an ON CONFLICT ... UPDATE SET id = S.id, ..., call.
-        
+
         args:
             merging_in: the name of the table we're merging in
             table_cols: a list of the columns in that table (which must match the
@@ -500,7 +479,7 @@ class CloudSQLWriter(BaseWriter):
 
     def ingest_crunchbase_flatfiles(self) -> str:
         """
-        Uses the crunchbase bulk export API endpoint to download Crunchbase's 
+        Uses the crunchbase bulk export API endpoint to download Crunchbase's
         daily .tar.gz export of CSVs. The CSVs are then loaded into individual
         tables in Cloud SQL.
         """
@@ -552,12 +531,53 @@ class CloudSQLWriter(BaseWriter):
 
         return f"Done writing crunchbase flatfiles in {datetime.datetime.now() - start}"
 
+    def append_rows_to_table_from_dataframe(
+        self, write_table: str, write_table_primary_key: str, df: pd.DataFrame
+    ) -> str:
+        """
+        Appends a set of rows from a dataframe to an existing table with the same schema.
+        Note that this will not work if the dataframe has column names or a column order
+        that does not exactly match that of the table it is being appended to.
+
+        args:
+        df:  dataframe containing the rows to append
+        write_table: the name of the table we'll be upserting the data into
+        write_table_primary_key: the primary key of the write_table
+        """
+
+        nrows = int(df.shape[0])
+
+        if nrows != 0:
+            temp_write_table = f"{write_table}_temp"
+            dtypes = self.get_postgres_dtypes_for_temp_table(write_table)
+
+            self.create_table_from_dataframe(temp_write_table, df, dtypes=dtypes)
+            self.write_from_dataframe(temp_write_table, df)
+
+            try:
+                with self.dest_conn.connect() as write_conn:
+                    table_cols = list(df.columns)
+                    write_conn.execute(
+                        f"""
+                            INSERT INTO {write_table}
+                            SELECT * FROM {temp_write_table}
+                            ON CONFLICT ({write_table_primary_key}) DO
+                                UPDATE SET {self.gen_update_set_parms("EXCLUDED", table_cols, write_table_primary_key)}
+                            """
+                    )
+            except Exception as err:
+                raise RuntimeError(f"Error upserting temp table: {err}") from err
+            finally:
+                self.delete_table(temp_write_table)
+
+        return f"Appending to Cloud SQL table {write_table} complete in for {nrows}."
+
 
 class HerokuWriter(BaseWriter):
     """
     A Heroku Postgres-specific Writer class with methods that will allow
-    the user to write data out to a Heroku-managed postgres instance. 
-    Note that this class does NOT have methods for creating new tables 
+    the user to write data out to a Heroku-managed postgres instance.
+    Note that this class does NOT have methods for creating new tables
     in Heroku Postgres.
     """
 
@@ -577,13 +597,13 @@ class HerokuWriter(BaseWriter):
         """
         Inserts data (one row or many) into a table and fails if the data
         being inserted conflicts with existing data. This depends on the
-        table being inserted into having a primary key with a unique 
+        table being inserted into having a primary key with a unique
         constraint.
 
         args:
             table: the name of the table to insert data into
             schema (optional): the schema (e.g., postgres) for the table
-            data: the data to insert  
+            data: the data to insert
         """
         start = datetime.datetime.now()
         if isinstance(data, list):

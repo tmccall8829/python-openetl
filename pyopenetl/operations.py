@@ -88,7 +88,6 @@ class BaseWriter:
     ) -> None:
         self.source_conn = source_conn
         self.dest_conn = dest_conn
-        self.logger = logging.getLogger(__name__)
 
     def convert_column_types(self, df: pd.DataFrame) -> pd.DataFrame:
         """Sets up types properly for ID and timestamp columns."""
@@ -418,7 +417,7 @@ class CloudSQLWriter(BaseWriter):
 
         # now, as part of the upsert process, remove any rows from our projection that have been removed from the source
         # this is NOT dependent upon there being any new data to upsert
-        self.logger.info(
+        logging.info(
             f"Upsert process: Initiating row cleanup process for table {write_table}"
         )
 
@@ -435,7 +434,7 @@ class CloudSQLWriter(BaseWriter):
                         _get_projection_ids(dest, read_table),
                         _get_projection_ids(source, write_table),
                     )
-                    self.logger.info(
+                    logging.info(
                         f"Upsert process: calculating IDs to remove from {write_table}"
                     )
                     deleted_ids = ids[0].difference(ids[1])
@@ -444,11 +443,11 @@ class CloudSQLWriter(BaseWriter):
 
         ids_to_remove = _get_projection_ids_to_remove()
         if len(ids_to_remove) == 0:
-            self.logger.info(
+            logging.info(
                 f"Upsert process: no rows to remove from {read_table} projection. Exiting."
             )
         else:
-            self.logger.info(
+            logging.info(
                 f"Upsert process: removing {len(ids_to_remove)} source-deleted rows from {read_table} projection"
             )
             with self.dest_conn.connect() as dest:
@@ -461,7 +460,7 @@ class CloudSQLWriter(BaseWriter):
                             ",)", ")"
                         )
                     )
-                    self.logger.info(
+                    logging.info(
                         f"Upsert process: row clean-up complete for table {write_table}"
                     )
 

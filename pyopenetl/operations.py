@@ -418,7 +418,7 @@ class CloudSQLWriter(BaseWriter):
 
         # now, as part of the upsert process, remove any rows from our projection that have been removed from the source
         # this is NOT dependent upon there being any new data to upsert
-        self.logger.warning(
+        self.logger.info(
             f"Upsert process: Initiating row cleanup process for table {write_table}"
         )
 
@@ -443,8 +443,12 @@ class CloudSQLWriter(BaseWriter):
             return deleted_ids
 
         ids_to_remove = _get_projection_ids_to_remove()
-        if len(ids_to_remove) > 0:
-            self.logger.warning(
+        if len(ids_to_remove) == 0:
+            self.logger.info(
+                f"Upsert process: no rows to remove from {read_table} projection. Exiting."
+            )
+        else:
+            self.logger.info(
                 f"Upsert process: removing {len(ids_to_remove)} source-deleted rows from {read_table} projection"
             )
             with self.dest_conn.connect() as dest:

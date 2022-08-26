@@ -3,6 +3,7 @@ import datetime
 import gc
 import io
 import json
+import logging
 import requests
 import tarfile
 from typing import Generator, Union
@@ -87,6 +88,7 @@ class BaseWriter:
     ) -> None:
         self.source_conn = source_conn
         self.dest_conn = dest_conn
+        self.logger = logging.getLogger(__name__)
 
     def convert_column_types(self, df: pd.DataFrame) -> pd.DataFrame:
         """Sets up types properly for ID and timestamp columns."""
@@ -99,7 +101,10 @@ class BaseWriter:
         return df
 
     def write_from_dataframe(
-        self, table: str, df: pd.DataFrame, chunksize: int = 100_000_000,
+        self,
+        table: str,
+        df: pd.DataFrame,
+        chunksize: int = 100_000_000,
     ) -> str:
         """
         Writes a pandas dataframe to a given SQL table. Note that this assumes that the
@@ -281,7 +286,10 @@ class CloudSQLWriter(BaseWriter):
                 )
             else:
                 df.head(0).to_sql(
-                    name=table, con=pd_conn, if_exists="replace", index=False,
+                    name=table,
+                    con=pd_conn,
+                    if_exists="replace",
+                    index=False,
                 )
 
         with self.dest_conn.connect() as cloud_sql_conn:
@@ -402,12 +410,18 @@ class CloudSQLWriter(BaseWriter):
             delta_query = f"SELECT * FROM {read_table} WHERE updated_at >= (NOW() - INTERVAL'{data_interval_hours} hours')"
             df = pd.read_sql(delta_query, read_conn)
 
+        nrows = df.shape[0]
+
         self.append_rows_to_table_from_dataframe(
             write_table, write_table_primary_key, df
         )
 
         # now, as part of the upsert process, remove any rows from our projection that have been removed from the source
         # this is NOT dependent upon there being any new data to upsert
+        self.logger.warning(
+            f"Upsert process: Initiating row cleanup process for table {write_table}"
+        )
+
         def _get_projection_ids(conn, table):
             res = conn.execute(f"SELECT id FROM {table}")
             employment_ids = set([i[0] for i in res.all()])
@@ -421,18 +435,18 @@ class CloudSQLWriter(BaseWriter):
                         _get_projection_ids(dest, read_table),
                         _get_projection_ids(source, write_table),
                     )
+                    self.logger.info(
+                        f"Upsert process: calculating IDs to remove from {write_table}"
+                    )
                     deleted_ids = ids[0].difference(ids[1])
-                    for i in deleted_ids:
-                        res = source.execute(
-                            f"SELECT id FROM {read_table} WHERE id = {i}"
-                        )
-                        if len(res.all()) != 0:
-                            deleted_ids.remove(i)
 
             return deleted_ids
 
         ids_to_remove = _get_projection_ids_to_remove()
         if len(ids_to_remove) > 0:
+            self.logger.warning(
+                f"Upsert process: removing {len(ids_to_remove)} source-deleted rows from {read_table} projection"
+            )
             with self.dest_conn.connect() as dest:
                 # make SUPER sure we don't delete anything from Heroku PG
                 if isinstance(self.dest_conn, HerokuConnection):
@@ -442,6 +456,9 @@ class CloudSQLWriter(BaseWriter):
                         f"DELETE FROM {write_table} WHERE id IN {tuple(ids_to_remove)}".replace(
                             ",)", ")"
                         )
+                    )
+                    self.logger.info(
+                        f"Upsert process: row clean-up complete for table {write_table}"
                     )
 
         return json.dumps(

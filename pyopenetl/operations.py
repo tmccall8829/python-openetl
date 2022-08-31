@@ -3,6 +3,7 @@ import datetime
 import gc
 import io
 import json
+import logging
 import requests
 import tarfile
 from typing import Generator, Union
@@ -460,33 +461,18 @@ class CloudSQLWriter(BaseWriter):
             delta_query = f"SELECT * FROM {read_table} WHERE updated_at >= (NOW() - INTERVAL'{data_interval_hours} hours')"
             df = pd.read_sql(delta_query, read_conn)
 
-        nrows = int(df.shape[0])
+        nrows = df.shape[0]
 
-        if nrows != 0:
-            temp_write_table = f"{write_table}_temp"
-            dtypes = self.get_postgres_table_schema(write_table)
-            self.create_table_from_dataframe(temp_write_table, df, dtypes=dtypes)
-
-            self.write_from_dataframe(temp_write_table, df)
-
-            try:
-                with self.dest_conn.connect() as write_conn:
-                    table_cols = list(df.columns)
-                    write_conn.execute(
-                        f"""
-                        INSERT INTO {write_table} 
-                        SELECT * FROM {temp_write_table}
-                        ON CONFLICT ({write_table_primary_key}) DO
-                            UPDATE SET {self.gen_update_set_parms("EXCLUDED", table_cols, write_table_primary_key)}
-                        """
-                    )
-            except Exception as err:
-                raise RuntimeError(f"Error upserting temp table: {err}") from err
-            finally:
-                self.delete_table(temp_write_table)
+        self.append_rows_to_table_from_dataframe(
+            write_table, write_table_primary_key, df
+        )
 
         # now, as part of the upsert process, remove any rows from our projection that have been removed from the source
         # this is NOT dependent upon there being any new data to upsert
+        logging.info(
+            f"Upsert process: Initiating row cleanup process for table {write_table}"
+        )
+
         def _get_projection_ids(conn, table):
             res = conn.execute(f"SELECT id FROM {table}")
             employment_ids = set([i[0] for i in res.all()])
@@ -500,18 +486,22 @@ class CloudSQLWriter(BaseWriter):
                         _get_projection_ids(dest, read_table),
                         _get_projection_ids(source, write_table),
                     )
+                    logging.info(
+                        f"Upsert process: calculating IDs to remove from {write_table}"
+                    )
                     deleted_ids = ids[0].difference(ids[1])
-                    for i in deleted_ids:
-                        res = source.execute(
-                            f"SELECT id FROM {read_table} WHERE id = {i}"
-                        )
-                        if len(res.all()) != 0:
-                            deleted_ids.remove(i)
 
             return deleted_ids
 
         ids_to_remove = _get_projection_ids_to_remove()
-        if len(ids_to_remove) > 0:
+        if len(ids_to_remove) == 0:
+            logging.info(
+                f"Upsert process: no rows to remove from {read_table} projection. Exiting."
+            )
+        else:
+            logging.info(
+                f"Upsert process: removing {len(ids_to_remove)} source-deleted rows from {read_table} projection"
+            )
             with self.dest_conn.connect() as dest:
                 # make SUPER sure we don't delete anything from Heroku PG
                 if isinstance(self.dest_conn, HerokuConnection):
@@ -521,6 +511,9 @@ class CloudSQLWriter(BaseWriter):
                         f"DELETE FROM {write_table} WHERE id IN {tuple(ids_to_remove)}".replace(
                             ",)", ")"
                         )
+                    )
+                    logging.info(
+                        f"Upsert process: row clean-up complete for table {write_table}"
                     )
 
         return json.dumps(
@@ -609,6 +602,47 @@ class CloudSQLWriter(BaseWriter):
                 gc.collect()
 
         return f"Done writing crunchbase flatfiles in {datetime.datetime.now() - start}"
+
+    def append_rows_to_table_from_dataframe(
+        self, write_table: str, write_table_primary_key: str, df: pd.DataFrame
+    ) -> str:
+        """
+        Appends a set of rows from a dataframe to an existing table with the same schema.
+        Note that this will not work if the dataframe has column names or a column order
+        that does not exactly match that of the table it is being appended to.
+
+        args:
+        df:  dataframe containing the rows to append
+        write_table: the name of the table we'll be upserting the data into
+        write_table_primary_key: the primary key of the write_table
+        """
+
+        nrows = int(df.shape[0])
+
+        if nrows != 0:
+            temp_write_table = f"{write_table}_temp"
+            dtypes = self.get_postgres_dtypes_for_temp_table(write_table)
+
+            self.create_table_from_dataframe(temp_write_table, df, dtypes=dtypes)
+            self.write_from_dataframe(temp_write_table, df)
+
+            try:
+                with self.dest_conn.connect() as write_conn:
+                    table_cols = list(df.columns)
+                    write_conn.execute(
+                        f"""
+                            INSERT INTO {write_table}
+                            SELECT * FROM {temp_write_table}
+                            ON CONFLICT ({write_table_primary_key}) DO
+                                UPDATE SET {self.gen_update_set_parms("EXCLUDED", table_cols, write_table_primary_key)}
+                            """
+                    )
+            except Exception as err:
+                raise RuntimeError(f"Error upserting temp table: {err}") from err
+            finally:
+                self.delete_table(temp_write_table)
+
+        return f"Appending to Cloud SQL table {write_table} complete in for {nrows}."
 
 
 class HerokuWriter(BaseWriter):

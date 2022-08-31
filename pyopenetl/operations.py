@@ -340,7 +340,7 @@ class CloudSQLWriter(BaseWriter):
                                 tablename,
                                 indexname;"""
         with self.source_conn.connect() as conn:
-            index_df = pd.read_sql(data_to_resolve_query, con=conn)
+            index_df = pd.read_sql(get_table_indices_query, con=conn)
 
         final_query_str = ""
         # Clean the index queries and concatenate them into one nice (long) query
@@ -391,11 +391,17 @@ class CloudSQLWriter(BaseWriter):
             gc.collect()
 
             its += 1
-        index_creation_query = self.get_indices_from_heroku(
-            read_table=read_table, write_table=write_table, schema="public"
-        )
-        with self.dest_conn.connect() as cloud_sql_conn:
-            cloud_sql_conn.execute(index_creation_query)
+        try:
+            index_creation_query = self.get_indices_from_heroku(
+                read_table=read_table, write_table=write_table, schema="public"
+            )
+        except Exception as err:
+            return f"Failed to get indices from {read_table}: {err}"
+        try:
+            with self.dest_conn.connect() as cloud_sql_conn:
+                cloud_sql_conn.execute(index_creation_query)
+        except Exception as err:
+            return f"Failed to write indices to {write_table}: {err}"
 
         return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
 

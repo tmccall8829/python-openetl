@@ -327,7 +327,13 @@ class CloudSQLWriter(BaseWriter):
         # delete the table we want to write out in Cloud SQL
         self.delete_table(write_table)
 
-        reader = HerokuReader(self.source_conn)
+        if isinstance(self.source_conn, HerokuConnection):
+            reader = HerokuReader(self.source_conn)
+        elif isinstance(self.source_conn, CloudSQLConnection):
+            reader = CloudSQLReader(self.source_conn)
+        else:
+            raise TypeError(f"Unsupported source connection type {self.source_conn} for table seeding.")
+
         write_time = datetime.datetime.now(datetime.timezone.utc)
 
         # read from postgres

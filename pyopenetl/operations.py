@@ -402,7 +402,7 @@ class CloudSQLWriter(BaseWriter):
             with self.dest_conn.connect() as cloud_sql_conn:
                 cloud_sql_conn.execute(index_creation_query)
         except Exception as err:
-            return f"Failed to write indices to {write_table}: {err}"
+            logging.critical(f"Failed to write indices to {write_table}: {err}")
 
         return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
 
@@ -621,7 +621,7 @@ class CloudSQLWriter(BaseWriter):
 
         if nrows != 0:
             temp_write_table = f"{write_table}_temp"
-            dtypes = self.get_postgres_dtypes_for_temp_table(write_table)
+            dtypes = self.get_postgres_table_schema(write_table)
 
             self.create_table_from_dataframe(temp_write_table, df, dtypes=dtypes)
             self.write_from_dataframe(temp_write_table, df)

@@ -397,12 +397,14 @@ class CloudSQLWriter(BaseWriter):
                 read_table=read_table, write_table=write_table, schema="public"
             )
         except Exception as err:
-            return f"Failed to get indices from {read_table}: {err}"
+            logging.critical(f"Failed to get indices from {read_table}: {err}")
+            return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}.  Warning: failed to get indices from read table."
         try:
             with self.dest_conn.connect() as cloud_sql_conn:
                 cloud_sql_conn.execute(index_creation_query)
         except Exception as err:
             logging.critical(f"Failed to write indices to {write_table}: {err}")
+            return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}.  Warning: indices failed to write."
 
         return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
 

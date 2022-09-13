@@ -38,11 +38,9 @@ class BaseReader:
             table: the name of the table to read into a dataframe
             chunksize: the number of rows to read in at a time
         """
-        with self.source_conn.connect() as conn:
-            for df in pd.read_sql(
-                f"SELECT * FROM {table}", con=conn, chunksize=chunksize
-            ):
-                yield df
+        query = f"SELECT * FROM {table}"
+        for df in self.sql_to_dataframe(query, chunksize):
+            yield df
 
     def sql_to_dataframe(
         self, query: str, chunksize: int = 100000

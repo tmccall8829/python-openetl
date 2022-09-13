@@ -44,6 +44,21 @@ class BaseReader:
             ):
                 yield df
 
+    def sql_to_dataframe(
+        self, query: str, chunksize: int = 100000
+    ) -> Generator[pd.DataFrame, None, None]:
+        """
+        Yields a generator that reads chunks from a SQL table into a dataframe with a custom
+        query. Really just a wrapper around pd.read_sql that easily gives us a generator.
+
+        args:
+            query: the text of your desired sql query
+            chunksize: the number of rows to read in at a time
+        """
+        with self.source_conn.connect() as conn:
+            for df in pd.read_sql(query, con=conn, chunksize=chunksize):
+                yield df
+
 
 class HerokuReader(BaseReader):
     """
@@ -100,10 +115,7 @@ class BaseWriter:
         return df
 
     def write_from_dataframe(
-        self,
-        table: str,
-        df: pd.DataFrame,
-        chunksize: int = 100_000_000,
+        self, table: str, df: pd.DataFrame, chunksize: int = 100_000_000,
     ) -> str:
         """
         Writes a pandas dataframe to a given SQL table. Note that this assumes that the
@@ -285,10 +297,7 @@ class CloudSQLWriter(BaseWriter):
                 )
             else:
                 df.head(0).to_sql(
-                    name=table,
-                    con=pd_conn,
-                    if_exists="replace",
-                    index=False,
+                    name=table, con=pd_conn, if_exists="replace", index=False,
                 )
 
         with self.dest_conn.connect() as cloud_sql_conn:
@@ -332,7 +341,9 @@ class CloudSQLWriter(BaseWriter):
         elif isinstance(self.source_conn, CloudSQLConnection):
             reader = CloudSQLReader(self.source_conn)
         else:
-            raise TypeError(f"Unsupported source connection type {self.source_conn} for table seeding.")
+            raise TypeError(
+                f"Unsupported source connection type {self.source_conn} for table seeding."
+            )
 
         write_time = datetime.datetime.now(datetime.timezone.utc)
 

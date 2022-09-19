@@ -38,10 +38,23 @@ class BaseReader:
             table: the name of the table to read into a dataframe
             chunksize: the number of rows to read in at a time
         """
+        query = f"SELECT * FROM {table}"
+        for df in self.sql_to_dataframe(query, chunksize):
+            yield df
+
+    def sql_to_dataframe(
+        self, query: str, chunksize: int = 100000
+    ) -> Generator[pd.DataFrame, None, None]:
+        """
+        Yields a generator that reads chunks from a SQL table into a dataframe with a custom
+        query. Really just a wrapper around pd.read_sql that easily gives us a generator.
+
+        args:
+            query: the text of your desired sql query
+            chunksize: the number of rows to read in at a time
+        """
         with self.source_conn.connect() as conn:
-            for df in pd.read_sql(
-                f"SELECT * FROM {table}", con=conn, chunksize=chunksize
-            ):
+            for df in pd.read_sql(query, con=conn, chunksize=chunksize):
                 yield df
 
 
@@ -287,10 +300,7 @@ class CloudSQLWriter(BaseWriter):
                 )
             else:
                 df.head(0).to_sql(
-                    name=table,
-                    con=pd_conn,
-                    if_exists="replace",
-                    index=False,
+                    name=table, con=pd_conn, if_exists="replace", index=False,
                 )
 
         with self.dest_conn.connect() as cloud_sql_conn:
@@ -334,7 +344,9 @@ class CloudSQLWriter(BaseWriter):
         elif isinstance(self.source_conn, CloudSQLConnection):
             reader = CloudSQLReader(self.source_conn)
         else:
-            raise TypeError(f"Unsupported source connection type {self.source_conn} for table seeding.")
+            raise TypeError(
+                f"Unsupported source connection type {self.source_conn} for table seeding."
+            )
 
         write_time = datetime.datetime.now(datetime.timezone.utc)
 

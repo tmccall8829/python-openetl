@@ -113,7 +113,11 @@ class BaseWriter:
         return df
 
     def write_from_dataframe(
-        self, table: str, df: pd.DataFrame, chunksize: int = 100_000_000,
+        self,
+        table: str,
+        df: pd.DataFrame,
+        chunksize: int = 100_000_000,
+        table_schema: Union[None, str] = None,
     ) -> str:
         """
         Writes a pandas dataframe to a given SQL table. Note that this assumes that the
@@ -139,7 +143,7 @@ class BaseWriter:
                 keys: list of str column names
                 data_iter: Iterable that iterates the values to be inserted
             """
-            # gets a DBAPI connection that can provide a cursor
+            # gets a DBAPI connection that can provide a cursor 
             raw_conn = conn.connection
             with raw_conn.cursor() as cur:
                 s_buf = io.StringIO()
@@ -162,6 +166,7 @@ class BaseWriter:
                 try:
                     df.to_sql(
                         name=table,
+                        schema=table_schema,
                         con=sql_conn,
                         if_exists="append",
                         index=False,

@@ -143,7 +143,7 @@ class BaseWriter:
                 keys: list of str column names
                 data_iter: Iterable that iterates the values to be inserted
             """
-            # gets a DBAPI connection that can provide a cursor 
+            # gets a DBAPI connection that can provide a cursor
             raw_conn = conn.connection
             with raw_conn.cursor() as cur:
                 s_buf = io.StringIO()
@@ -200,7 +200,7 @@ class BaseWriter:
         print(f"SQL executed in {datetime.datetime.now() - start}")
         return res
 
-    def get_postgres_dtypes_for_temp_table(self, table: str) -> dict:
+    def get_postgres_table_schema(self, table: str) -> dict:
         """
         Turns a SQL table's schema into a dictionary of column names to SQLAlchemy types.
 
@@ -300,7 +300,10 @@ class CloudSQLWriter(BaseWriter):
                 )
             else:
                 df.head(0).to_sql(
-                    name=table, con=pd_conn, if_exists="replace", index=False,
+                    name=table,
+                    con=pd_conn,
+                    if_exists="replace",
+                    index=False,
                 )
 
         with self.dest_conn.connect() as cloud_sql_conn:
@@ -323,6 +326,41 @@ class CloudSQLWriter(BaseWriter):
         with self.dest_conn.connect() as cloud_sql_conn:
             print(f"--> Deleting table {table}")
             cloud_sql_conn.execute(f"DROP TABLE IF EXISTS {table}")
+
+    def get_indices_from_heroku(
+        self, read_table: str, write_table: str, schema: str = "public"
+    ) -> str:
+        """
+        Reads the index commands from the source heroku table, and returns a command to run on the destination table.
+
+        args:
+            read_table: the name of the heroku table being read from
+            write_table: the name of the Cloud SQL table we write to
+        """
+
+        # Query to get indices from read_table
+        get_table_indices_query = f"""SELECT
+                                tablename,
+                                indexname,
+                                indexdef
+                            FROM
+                                pg_indexes
+                            WHERE
+                                schemaname = '{schema}' AND
+                                tablename = '{read_table}'
+                            ORDER BY
+                                tablename,
+                                indexname;"""
+        with self.source_conn.connect() as conn:
+            index_df = pd.read_sql(get_table_indices_query, con=conn)
+
+        final_query_str = ""
+        # Clean the index queries and concatenate them into one nice (long) query
+        for query in index_df["indexdef"]:
+            tempstr = query.replace(f"ON {schema}.{read_table}", f"ON {write_table}")
+            final_query_str += tempstr
+            final_query_str += "; \n"
+        return final_query_str
 
     def seed_table(self, read_table: str, read_chunksize: int, write_table: str) -> str:
         """
@@ -357,7 +395,9 @@ class CloudSQLWriter(BaseWriter):
             if its == 1:
                 # write to (an optionally different) table name in Cloud SQL
                 print(f"--> Creating new table {write_table} in Cloud SQL")
-                self.create_table_from_dataframe(write_table, df)
+                self.create_table_from_dataframe(
+                    write_table, df, dtypes=self.get_postgres_table_schema(read_table)
+                )
 
             try:
                 self.write_from_dataframe(
@@ -371,6 +411,19 @@ class CloudSQLWriter(BaseWriter):
             gc.collect()
 
             its += 1
+        try:
+            index_creation_query = self.get_indices_from_heroku(
+                read_table=read_table, write_table=write_table, schema="public"
+            )
+        except Exception as err:
+            logging.critical(f"Failed to get indices from {read_table}: {err}")
+            return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}.  Warning: failed to get indices from read table."
+        try:
+            with self.dest_conn.connect() as cloud_sql_conn:
+                cloud_sql_conn.execute(index_creation_query)
+        except Exception as err:
+            logging.critical(f"Failed to write indices to {write_table}: {err}")
+            return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}.  Warning: indices failed to write."
 
         return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
 
@@ -589,7 +642,7 @@ class CloudSQLWriter(BaseWriter):
 
         if nrows != 0:
             temp_write_table = f"{write_table}_temp"
-            dtypes = self.get_postgres_dtypes_for_temp_table(write_table)
+            dtypes = self.get_postgres_table_schema(write_table)
 
             self.create_table_from_dataframe(temp_write_table, df, dtypes=dtypes)
             self.write_from_dataframe(temp_write_table, df)

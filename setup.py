@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 
 setup(
     name="python-openetl",
@@ -20,5 +20,6 @@ setup(
         "heroku3 >= 5.1.4",
         "pg8000 >= 1.29.1",
         "marshmallow-sqlalchemy >= 0.26.1",
+        "sqlalchemy-bigquery >= 1.4.4",
     ],
 )

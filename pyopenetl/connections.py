@@ -181,13 +181,30 @@ class BQConnection(BaseConnection):
     args:
         project (str): The GCP project containing the BigQuery instance we want
             to connect to.
+        stream_results (bool): Defaults to True. If you're reading data from BQ,
+            you should be streaming it and reading it in chunks. If you're writing
+            data to BQ, you should set this to False.
     """
 
-    def __init__(self, project: str) -> None:
+    def __init__(self, project: str, stream_results: bool = True) -> None:
         super().__init__(project)
 
+        self.stream_results = stream_results
+
     @contextlib.contextmanager
-    def connect(self) -> Generator[bigquery.Client, None, None]:
+    def connect(self) -> Generator[sqlalchemy.engine.Engine, None, None]:
+        connection = (
+            sqlalchemy.engine.create_engine(f"bigquery://{self.project}")
+            .connect()
+            .execution_options(stream_results=self.stream_results)
+        )
+
+        yield connection
+
+        connection.close()
+
+    @contextlib.contextmanager
+    def client(self) -> Generator[bigquery.Client, None, None]:
         client = bigquery.Client()
 
         yield client

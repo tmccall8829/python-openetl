@@ -84,6 +84,9 @@
                         <li>
                                 <a class="function" href="#BQConnection.connect">connect</a>
                         </li>
+                        <li>
+                                <a class="function" href="#BQConnection.client">client</a>
+                        </li>
                 </ul>
 
             </li>
@@ -291,18 +294,35 @@
 </span><span id="L-181"><a href="#L-181"><span class="linenos">181</span></a><span class="sd">    args:</span>
 </span><span id="L-182"><a href="#L-182"><span class="linenos">182</span></a><span class="sd">        project (str): The GCP project containing the BigQuery instance we want</span>
 </span><span id="L-183"><a href="#L-183"><span class="linenos">183</span></a><span class="sd">            to connect to.</span>
-</span><span id="L-184"><a href="#L-184"><span class="linenos">184</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-185"><a href="#L-185"><span class="linenos">185</span></a>
-</span><span id="L-186"><a href="#L-186"><span class="linenos">186</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="L-187"><a href="#L-187"><span class="linenos">187</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="L-184"><a href="#L-184"><span class="linenos">184</span></a><span class="sd">        stream_results (bool): Defaults to True. If you&#39;re reading data from BQ,</span>
+</span><span id="L-185"><a href="#L-185"><span class="linenos">185</span></a><span class="sd">            you should be streaming it and reading it in chunks. If you&#39;re writing</span>
+</span><span id="L-186"><a href="#L-186"><span class="linenos">186</span></a><span class="sd">            data to BQ, you should set this to False.</span>
+</span><span id="L-187"><a href="#L-187"><span class="linenos">187</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="L-188"><a href="#L-188"><span class="linenos">188</span></a>
-</span><span id="L-189"><a href="#L-189"><span class="linenos">189</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="L-190"><a href="#L-190"><span class="linenos">190</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="L-191"><a href="#L-191"><span class="linenos">191</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
-</span><span id="L-192"><a href="#L-192"><span class="linenos">192</span></a>
-</span><span id="L-193"><a href="#L-193"><span class="linenos">193</span></a>        <span class="k">yield</span> <span class="n">client</span>
-</span><span id="L-194"><a href="#L-194"><span class="linenos">194</span></a>
-</span><span id="L-195"><a href="#L-195"><span class="linenos">195</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span id="L-189"><a href="#L-189"><span class="linenos">189</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stream_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="L-190"><a href="#L-190"><span class="linenos">190</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="L-191"><a href="#L-191"><span class="linenos">191</span></a>
+</span><span id="L-192"><a href="#L-192"><span class="linenos">192</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span> <span class="o">=</span> <span class="n">stream_results</span>
+</span><span id="L-193"><a href="#L-193"><span class="linenos">193</span></a>
+</span><span id="L-194"><a href="#L-194"><span class="linenos">194</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="L-195"><a href="#L-195"><span class="linenos">195</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="L-196"><a href="#L-196"><span class="linenos">196</span></a>        <span class="n">connection</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="L-197"><a href="#L-197"><span class="linenos">197</span></a>            <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;bigquery://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="L-198"><a href="#L-198"><span class="linenos">198</span></a>            <span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="L-199"><a href="#L-199"><span class="linenos">199</span></a>            <span class="o">.</span><span class="n">execution_options</span><span class="p">(</span><span class="n">stream_results</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">)</span>
+</span><span id="L-200"><a href="#L-200"><span class="linenos">200</span></a>        <span class="p">)</span>
+</span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a>
+</span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a>        <span class="k">yield</span> <span class="n">connection</span>
+</span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a>
+</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a>
+</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>    <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a>
+</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a>        <span class="k">yield</span> <span class="n">client</span>
+</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a>
+</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </span></pre></div>
 
 
@@ -856,18 +876,35 @@ to reading the latest version of the secret.</p>
 </span><span id="BQConnection-182"><a href="#BQConnection-182"><span class="linenos">182</span></a><span class="sd">    args:</span>
 </span><span id="BQConnection-183"><a href="#BQConnection-183"><span class="linenos">183</span></a><span class="sd">        project (str): The GCP project containing the BigQuery instance we want</span>
 </span><span id="BQConnection-184"><a href="#BQConnection-184"><span class="linenos">184</span></a><span class="sd">            to connect to.</span>
-</span><span id="BQConnection-185"><a href="#BQConnection-185"><span class="linenos">185</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="BQConnection-186"><a href="#BQConnection-186"><span class="linenos">186</span></a>
-</span><span id="BQConnection-187"><a href="#BQConnection-187"><span class="linenos">187</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="BQConnection-188"><a href="#BQConnection-188"><span class="linenos">188</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="BQConnection-185"><a href="#BQConnection-185"><span class="linenos">185</span></a><span class="sd">        stream_results (bool): Defaults to True. If you&#39;re reading data from BQ,</span>
+</span><span id="BQConnection-186"><a href="#BQConnection-186"><span class="linenos">186</span></a><span class="sd">            you should be streaming it and reading it in chunks. If you&#39;re writing</span>
+</span><span id="BQConnection-187"><a href="#BQConnection-187"><span class="linenos">187</span></a><span class="sd">            data to BQ, you should set this to False.</span>
+</span><span id="BQConnection-188"><a href="#BQConnection-188"><span class="linenos">188</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="BQConnection-189"><a href="#BQConnection-189"><span class="linenos">189</span></a>
-</span><span id="BQConnection-190"><a href="#BQConnection-190"><span class="linenos">190</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="BQConnection-191"><a href="#BQConnection-191"><span class="linenos">191</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="BQConnection-192"><a href="#BQConnection-192"><span class="linenos">192</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
-</span><span id="BQConnection-193"><a href="#BQConnection-193"><span class="linenos">193</span></a>
-</span><span id="BQConnection-194"><a href="#BQConnection-194"><span class="linenos">194</span></a>        <span class="k">yield</span> <span class="n">client</span>
-</span><span id="BQConnection-195"><a href="#BQConnection-195"><span class="linenos">195</span></a>
-</span><span id="BQConnection-196"><a href="#BQConnection-196"><span class="linenos">196</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span id="BQConnection-190"><a href="#BQConnection-190"><span class="linenos">190</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stream_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="BQConnection-191"><a href="#BQConnection-191"><span class="linenos">191</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="BQConnection-192"><a href="#BQConnection-192"><span class="linenos">192</span></a>
+</span><span id="BQConnection-193"><a href="#BQConnection-193"><span class="linenos">193</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span> <span class="o">=</span> <span class="n">stream_results</span>
+</span><span id="BQConnection-194"><a href="#BQConnection-194"><span class="linenos">194</span></a>
+</span><span id="BQConnection-195"><a href="#BQConnection-195"><span class="linenos">195</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="BQConnection-196"><a href="#BQConnection-196"><span class="linenos">196</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="BQConnection-197"><a href="#BQConnection-197"><span class="linenos">197</span></a>        <span class="n">connection</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="BQConnection-198"><a href="#BQConnection-198"><span class="linenos">198</span></a>            <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;bigquery://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="BQConnection-199"><a href="#BQConnection-199"><span class="linenos">199</span></a>            <span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="BQConnection-200"><a href="#BQConnection-200"><span class="linenos">200</span></a>            <span class="o">.</span><span class="n">execution_options</span><span class="p">(</span><span class="n">stream_results</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">)</span>
+</span><span id="BQConnection-201"><a href="#BQConnection-201"><span class="linenos">201</span></a>        <span class="p">)</span>
+</span><span id="BQConnection-202"><a href="#BQConnection-202"><span class="linenos">202</span></a>
+</span><span id="BQConnection-203"><a href="#BQConnection-203"><span class="linenos">203</span></a>        <span class="k">yield</span> <span class="n">connection</span>
+</span><span id="BQConnection-204"><a href="#BQConnection-204"><span class="linenos">204</span></a>
+</span><span id="BQConnection-205"><a href="#BQConnection-205"><span class="linenos">205</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span id="BQConnection-206"><a href="#BQConnection-206"><span class="linenos">206</span></a>
+</span><span id="BQConnection-207"><a href="#BQConnection-207"><span class="linenos">207</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="BQConnection-208"><a href="#BQConnection-208"><span class="linenos">208</span></a>    <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="BQConnection-209"><a href="#BQConnection-209"><span class="linenos">209</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+</span><span id="BQConnection-210"><a href="#BQConnection-210"><span class="linenos">210</span></a>
+</span><span id="BQConnection-211"><a href="#BQConnection-211"><span class="linenos">211</span></a>        <span class="k">yield</span> <span class="n">client</span>
+</span><span id="BQConnection-212"><a href="#BQConnection-212"><span class="linenos">212</span></a>
+</span><span id="BQConnection-213"><a href="#BQConnection-213"><span class="linenos">213</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </span></pre></div>
 
 
@@ -875,7 +912,10 @@ to reading the latest version of the secret.</p>
 
 <p>args:
     project (str): The GCP project containing the BigQuery instance we want
-        to connect to.</p>
+        to connect to.
+    stream_results (bool): Defaults to True. If you're reading data from BQ,
+        you should be streaming it and reading it in chunks. If you're writing
+        data to BQ, you should set this to False.</p>
 </div>
 
 
@@ -883,14 +923,16 @@ to reading the latest version of the secret.</p>
                                         <input id="BQConnection.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
-        <span class="name">BQConnection</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">project</span><span class="p">:</span> <span class="nb">str</span></span>)</span>
+        <span class="name">BQConnection</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">project</span><span class="p">:</span> <span class="nb">str</span>, </span><span class="param"><span class="n">stream_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></span>)</span>
 
                 <label class="view-source-button" for="BQConnection.__init__-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#BQConnection.__init__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection.__init__-187"><a href="#BQConnection.__init__-187"><span class="linenos">187</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="BQConnection.__init__-188"><a href="#BQConnection.__init__-188"><span class="linenos">188</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection.__init__-190"><a href="#BQConnection.__init__-190"><span class="linenos">190</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stream_results</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="BQConnection.__init__-191"><a href="#BQConnection.__init__-191"><span class="linenos">191</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+</span><span id="BQConnection.__init__-192"><a href="#BQConnection.__init__-192"><span class="linenos">192</span></a>
+</span><span id="BQConnection.__init__-193"><a href="#BQConnection.__init__-193"><span class="linenos">193</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span> <span class="o">=</span> <span class="n">stream_results</span>
 </span></pre></div>
 
 
@@ -903,19 +945,48 @@ to reading the latest version of the secret.</p>
                     <div class="decorator">@contextlib.contextmanager</div>
 
         <span class="def">def</span>
-        <span class="name">connect</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Generator</span><span class="p">[</span><span class="n">google</span><span class="o">.</span><span class="n">cloud</span><span class="o">.</span><span class="n">bigquery</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>:</span></span>
+        <span class="name">connect</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>:</span></span>
 
                 <label class="view-source-button" for="BQConnection.connect-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#BQConnection.connect"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection.connect-190"><a href="#BQConnection.connect-190"><span class="linenos">190</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
-</span><span id="BQConnection.connect-191"><a href="#BQConnection.connect-191"><span class="linenos">191</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="BQConnection.connect-192"><a href="#BQConnection.connect-192"><span class="linenos">192</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
-</span><span id="BQConnection.connect-193"><a href="#BQConnection.connect-193"><span class="linenos">193</span></a>
-</span><span id="BQConnection.connect-194"><a href="#BQConnection.connect-194"><span class="linenos">194</span></a>        <span class="k">yield</span> <span class="n">client</span>
-</span><span id="BQConnection.connect-195"><a href="#BQConnection.connect-195"><span class="linenos">195</span></a>
-</span><span id="BQConnection.connect-196"><a href="#BQConnection.connect-196"><span class="linenos">196</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection.connect-195"><a href="#BQConnection.connect-195"><span class="linenos">195</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="BQConnection.connect-196"><a href="#BQConnection.connect-196"><span class="linenos">196</span></a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">Engine</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="BQConnection.connect-197"><a href="#BQConnection.connect-197"><span class="linenos">197</span></a>        <span class="n">connection</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="BQConnection.connect-198"><a href="#BQConnection.connect-198"><span class="linenos">198</span></a>            <span class="n">sqlalchemy</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;bigquery://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="BQConnection.connect-199"><a href="#BQConnection.connect-199"><span class="linenos">199</span></a>            <span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+</span><span id="BQConnection.connect-200"><a href="#BQConnection.connect-200"><span class="linenos">200</span></a>            <span class="o">.</span><span class="n">execution_options</span><span class="p">(</span><span class="n">stream_results</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stream_results</span><span class="p">)</span>
+</span><span id="BQConnection.connect-201"><a href="#BQConnection.connect-201"><span class="linenos">201</span></a>        <span class="p">)</span>
+</span><span id="BQConnection.connect-202"><a href="#BQConnection.connect-202"><span class="linenos">202</span></a>
+</span><span id="BQConnection.connect-203"><a href="#BQConnection.connect-203"><span class="linenos">203</span></a>        <span class="k">yield</span> <span class="n">connection</span>
+</span><span id="BQConnection.connect-204"><a href="#BQConnection.connect-204"><span class="linenos">204</span></a>
+</span><span id="BQConnection.connect-205"><a href="#BQConnection.connect-205"><span class="linenos">205</span></a>        <span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span></pre></div>
+
+
+    
+
+                            </div>
+                            <div id="BQConnection.client" class="classattr">
+                                        <input id="BQConnection.client-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+                    <div class="decorator">@contextlib.contextmanager</div>
+
+        <span class="def">def</span>
+        <span class="name">client</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Generator</span><span class="p">[</span><span class="n">google</span><span class="o">.</span><span class="n">cloud</span><span class="o">.</span><span class="n">bigquery</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">,</span> <span class="n">NoneType</span><span class="p">]</span>:</span></span>
+
+                <label class="view-source-button" for="BQConnection.client-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#BQConnection.client"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="BQConnection.client-207"><a href="#BQConnection.client-207"><span class="linenos">207</span></a>    <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+</span><span id="BQConnection.client-208"><a href="#BQConnection.client-208"><span class="linenos">208</span></a>    <span class="k">def</span> <span class="nf">client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+</span><span id="BQConnection.client-209"><a href="#BQConnection.client-209"><span class="linenos">209</span></a>        <span class="n">client</span> <span class="o">=</span> <span class="n">bigquery</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+</span><span id="BQConnection.client-210"><a href="#BQConnection.client-210"><span class="linenos">210</span></a>
+</span><span id="BQConnection.client-211"><a href="#BQConnection.client-211"><span class="linenos">211</span></a>        <span class="k">yield</span> <span class="n">client</span>
+</span><span id="BQConnection.client-212"><a href="#BQConnection.client-212"><span class="linenos">212</span></a>
+</span><span id="BQConnection.client-213"><a href="#BQConnection.client-213"><span class="linenos">213</span></a>        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </span></pre></div>
 
 

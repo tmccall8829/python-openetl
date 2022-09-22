@@ -7,7 +7,7 @@ import logging
 import requests
 import tarfile
 from typing import Generator, Union
-
+import time
 import pandas as pd
 import sqlalchemy
 
@@ -392,7 +392,7 @@ class CloudSQLWriter(BaseWriter):
                 f"Unsupported source connection type {self.source_conn} for table seeding."
             )
 
-        write_time = datetime.datetime.now(datetime.timezone.utc)
+        write_time = time.time()
 
         # read from postgres
         its = 1
@@ -417,21 +417,28 @@ class CloudSQLWriter(BaseWriter):
             gc.collect()
 
             its += 1
+
         try:
-            index_creation_query = self.get_indices_from_heroku(
-                read_table=read_table, write_table=write_table, schema=schema
+            logging.info(
+                self.add_indices_to_table(
+                    read_table=read_table, write_table=write_table
+                )
             )
         except Exception as err:
-            logging.critical(f"Failed to get indices from {read_table}: {err}")
-            return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}.  Warning: failed to get indices from read table."
-        try:
-            with self.dest_conn.connect() as cloud_sql_conn:
-                cloud_sql_conn.execute(index_creation_query)
-        except Exception as err:
             logging.critical(f"Failed to write indices to {write_table}: {err}")
-            return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}.  Warning: indices failed to write."
+            return f"Failed to add indices to CloudSQL table {read_table}"
 
-        return f"Seeding of Cloud SQL table {write_table} complete in {datetime.datetime.now(datetime.timezone.utc) - write_time}"
+        return f"Seeding of Cloud SQL table {write_table} complete in {time.time() - write_time}"
+
+    def add_indices_to_table(
+        self, read_table: str, write_table: str, schema: str = "public"
+    ):
+        index_creation_query = self.get_indices_from_heroku(
+            read_table=read_table, write_table=write_table, schema=schema
+        )
+        with self.dest_conn.connect() as cloud_sql_conn:
+            cloud_sql_conn.execute(index_creation_query)
+        return f"Added indices to CloudSQL table {read_table}"
 
     def seed_from_remote_csv(
         self, remote_csv_url: str, write_table: str, chunksize: int = 200_000

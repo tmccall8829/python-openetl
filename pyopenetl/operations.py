@@ -426,7 +426,9 @@ class CloudSQLWriter(BaseWriter):
             )
         except Exception as err:
             logging.critical(f"Failed to write indices to {write_table}: {err}")
-            return f"Failed to add indices to CloudSQL table {read_table}"
+            raise RuntimeError(
+                f"Failed to add indices to CloudSQL table {read_table}: {err}"
+            )
 
         return f"Seeding of Cloud SQL table {write_table} complete in {time.time() - write_time}"
 

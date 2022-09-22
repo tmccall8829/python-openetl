@@ -362,7 +362,13 @@ class CloudSQLWriter(BaseWriter):
             final_query_str += "; \n"
         return final_query_str
 
-    def seed_table(self, read_table: str, read_chunksize: int, write_table: str) -> str:
+    def seed_table(
+        self,
+        read_table: str,
+        read_chunksize: int,
+        write_table: str,
+        schema: str = "public",
+    ) -> str:
         """
         Seeds a direct projection of a table from one DB source to another. Note that
         this DOES create the table before writing, unlike the basic write method.
@@ -413,7 +419,7 @@ class CloudSQLWriter(BaseWriter):
             its += 1
         try:
             index_creation_query = self.get_indices_from_heroku(
-                read_table=read_table, write_table=write_table, schema="public"
+                read_table=read_table, write_table=write_table, schema=schema
             )
         except Exception as err:
             logging.critical(f"Failed to get indices from {read_table}: {err}")

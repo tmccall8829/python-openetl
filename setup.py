@@ -1,6 +1,6 @@
 from setuptools import setup
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 
 setup(
     name="python-openetl",
@@ -13,13 +13,10 @@ setup(
     description="A simple python library that makes it easy to create simple ETL pipelines in code.",
     long_description=open("README.md").read(),
     install_requires=[
-        "pandas >= 1.4.2",
-        "pyarrow >= 7.0.0",
-        "google-cloud-bigquery >= 3.0.1",
-        "google-cloud-secret-manager >= 2.9.2",
-        "heroku3 >= 5.1.4",
-        "pg8000 >= 1.29.1",
-        "marshmallow-sqlalchemy >= 0.26.1",
-        "sqlalchemy-bigquery >= 1.4.4",
+        "pandas",
+        "pyarrow",
+        "google-cloud-bigquery",
+        "google-cloud-secret-manager",
+        "sqlalchemy-bigquery",
     ],
 )

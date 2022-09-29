@@ -143,9 +143,6 @@ class BaseWriter:
                 keys: list of str column names
                 data_iter: Iterable that iterates the values to be inserted
             """
-            cols_tuple = tuple(list(keys))
-            formatted_cols = f"{cols_tuple}".replace(",)", ")")
-
             # gets a DBAPI connection that can provide a cursor
             raw_conn = conn.connection
             with raw_conn.cursor() as cur:
@@ -159,7 +156,7 @@ class BaseWriter:
                 else:
                     table_name = table.name
 
-                sql = f"COPY {table_name} {formatted_cols} FROM STDIN WITH CSV"
+                sql = f"COPY {table_name} FROM STDIN WITH CSV"
                 cur.copy_expert(sql=sql, file=s_buf)
 
         with self.dest_conn.connect() as sql_conn:

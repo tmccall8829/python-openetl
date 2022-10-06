@@ -11,7 +11,7 @@ import time
 import pandas as pd
 import sqlalchemy
 
-from pyopenetl.connections import *
+from pyopenetl import HerokuConnection, CloudSQLConnection, BQConnection
 
 
 class BaseReader:
@@ -19,8 +19,8 @@ class BaseReader:
     Basic class inherited by other Reader classes.
 
     args:
-        source_conn: a connection object which will be used to open up a context-managed connection
-            to one of our databases.
+        source_conn: a connection object which will be used to open up a
+        context-managed connection to one of our databases.
     """
 
     def __init__(
@@ -46,8 +46,9 @@ class BaseReader:
         self, query: str, chunksize: int = 100000
     ) -> Generator[pd.DataFrame, None, None]:
         """
-        Yields a generator that reads chunks from a SQL table into a dataframe with a custom
-        query. Really just a wrapper around pd.read_sql that easily gives us a generator.
+        Yields a generator that reads chunks from a SQL table into a dataframe with a
+        custom query. Really just a wrapper around pd.read_sql that easily gives us a
+        generator.
 
         args:
             query: the text of your desired sql query
@@ -66,7 +67,8 @@ class HerokuReader(BaseReader):
     def __init__(self, source_conn: HerokuConnection) -> None:
         if not isinstance(source_conn, HerokuConnection):
             raise TypeError(
-                f"HerokuReader requires instantiation with a HerokuConnection object, tried with {source_conn}"
+                f"HerokuReader requires instantiation with a HerokuConnection object,\
+                tried with {source_conn}"
             )
         super().__init__(source_conn)
 
@@ -79,15 +81,16 @@ class CloudSQLReader(BaseReader):
     def __init__(self, source_conn: CloudSQLConnection) -> None:
         if not isinstance(source_conn, CloudSQLConnection):
             raise TypeError(
-                f"CloudSQLReader requires instantiation with a CloudSQLConnection object, tried with {source_conn}"
+                f"CloudSQLReader requires instantiation with a CloudSQLConnection object\
+                    tried with {source_conn}"
             )
         super().__init__(source_conn)
 
 
 class BaseWriter:
     """
-    Takes a source connection and a destination connection object and provides methods for
-    writing data between the two.
+    Takes a source connection and a destination connection object and provides methods
+    for writing data between the two.
 
     args:
         source_conn: the source connection object we'll be using
@@ -217,7 +220,8 @@ class BaseWriter:
 
     def get_postgres_table_schema(self, table: str) -> dict:
         """
-        Turns a SQL table's schema into a dictionary of column names to SQLAlchemy types.
+        Turns a SQL table's schema into a dictionary of column names to SQLAlchemy
+        types.
 
         args:
             table: name of the table schema to read
@@ -243,9 +247,10 @@ class BaseWriter:
             }
             try:
                 type_to_return = type_mapping[str_type]
-            except:
+            except Exception as err:
                 raise ValueError(
-                    f"Unable to map type: {str_type}. Does it exist in type_mappings?"
+                    f"Unable to map type: {str_type}. Does it exist in type_mappings?\
+                        {err}"
                 )
 
             return type_to_return
@@ -322,10 +327,14 @@ class CloudSQLWriter(BaseWriter):
                 )
 
         with self.dest_conn.connect() as cloud_sql_conn:
-            # in order to do upserts later, each table needs to have a unique constraint on the primary key
+            # in order to do upserts later, each table needs to have a unique
+            # constraint on the primary key
             if primary_key in df.columns:
                 cloud_sql_conn.execute(
-                    f"ALTER TABLE {table} ADD CONSTRAINT {table}_{primary_key}_unique UNIQUE ({primary_key});"
+                    f"""
+                    ALTER TABLE {table}
+                    ADD CONSTRAINT {table}_{primary_key}_unique UNIQUE ({primary_key});
+                    """
                 )
 
         del df
@@ -346,7 +355,8 @@ class CloudSQLWriter(BaseWriter):
         self, read_table: str, write_table: str, schema: str = "public"
     ) -> str:
         """
-        Reads the index commands from the source heroku table, and returns a command to run on the destination table.
+        Reads the index commands from the source heroku table, and returns a command to
+        run on the destination table.
 
         args:
             read_table: the name of the heroku table being read from
@@ -404,7 +414,8 @@ class CloudSQLWriter(BaseWriter):
             reader = CloudSQLReader(self.source_conn)
         else:
             raise TypeError(
-                f"Unsupported source connection type {self.source_conn} for table seeding."
+                f"Unsupported source connection type {self.source_conn} for table\
+                    seeding."
             )
 
         write_time = time.time()
@@ -445,7 +456,8 @@ class CloudSQLWriter(BaseWriter):
                 f"Failed to add indices to CloudSQL table {read_table}: {err}"
             )
 
-        return f"Seeding of Cloud SQL table {write_table} complete in {time.time() - write_time}"
+        return f"Seeding of Cloud SQL table {write_table} complete in\
+            {time.time() - write_time}"
 
     def add_indices_to_table(
         self, read_table: str, write_table: str, schema: str = "public"
@@ -494,14 +506,15 @@ class CloudSQLWriter(BaseWriter):
         write_table_primary_key: str,
     ) -> str:
         """
-        Performs an upsert of a small timeframe of data into a larger table of data with the
-        same column names and types. Note that this will not work if the table to upsert
-        has column names or a column order that does not exactly match that of the table
-        it is being upserted into.
+        Performs an upsert of a small timeframe of data into a larger table of data
+        with the same column names and types. Note that this will not work if the
+        table to upsert has column names or a column order that does not exactly
+        match that of the table it is being upserted into.
 
         args:
             read_table: the name of the table to read in and use for the upsert
-            data_interval_hours: the number of hours to look into the past and read (e.g., the last 2 hours)
+            data_interval_hours: the number of hours to look into the past and read
+                (e.g., the last 2 hours)
             write_table: the name of the table we'll be upserting the data into
             write_table_primary_key: the primary key of the write_table
         """
@@ -509,7 +522,8 @@ class CloudSQLWriter(BaseWriter):
             write_time = datetime.datetime.now()
 
             # read from postgres and write the temp table
-            delta_query = f"SELECT * FROM {read_table} WHERE updated_at >= (NOW() - INTERVAL'{data_interval_hours} hours')"
+            delta_query = f"SELECT * FROM {read_table} WHERE updated_at >=\
+                (NOW() - INTERVAL'{data_interval_hours} hours')"
             df = pd.read_sql(delta_query, read_conn)
 
         nrows = df.shape[0]
@@ -518,8 +532,9 @@ class CloudSQLWriter(BaseWriter):
             write_table, write_table_primary_key, df
         )
 
-        # now, as part of the upsert process, remove any rows from our projection that have been removed from the source
-        # this is NOT dependent upon there being any new data to upsert
+        # now, as part of the upsert process, remove any rows from our projection that
+        # have been removed from the source this is NOT dependent upon there being any
+        # new data to upsert
         logging.info(
             f"Upsert process: Initiating row cleanup process for table {write_table}"
         )
@@ -547,19 +562,21 @@ class CloudSQLWriter(BaseWriter):
         ids_to_remove = _get_projection_ids_to_remove()
         if len(ids_to_remove) == 0:
             logging.info(
-                f"Upsert process: no rows to remove from {read_table} projection. Exiting."
+                f"Upsert process: no rows to remove from {read_table} projection."
             )
         else:
             logging.info(
-                f"Upsert process: removing {len(ids_to_remove)} source-deleted rows from {read_table} projection"
+                f"Upsert process: removing {len(ids_to_remove)} source-deleted rows\
+                    from {read_table} projection"
             )
             with self.dest_conn.connect() as dest:
                 # make SUPER sure we don't delete anything from Heroku PG
                 if isinstance(self.dest_conn, HerokuConnection):
-                    print(f"Cannot delete rows from Heroku PG. Exiting.")
+                    print("Cannot delete rows from Heroku PG. Exiting.")
                 else:
                     dest.execute(
-                        f"DELETE FROM {write_table} WHERE id IN {tuple(ids_to_remove)}".replace(
+                        f"DELETE FROM {write_table} WHERE id IN\
+                            {tuple(ids_to_remove)}".replace(
                             ",)", ")"
                         )
                     )
@@ -581,7 +598,7 @@ class CloudSQLWriter(BaseWriter):
         self, merging_in: str, table_cols: list, primary_key_id: str
     ) -> str:
         """
-        Used to generate the parameters for an ON CONFLICT ... UPDATE SET id = S.id, ..., call.
+        Used to generate the parameters for an ON CONFLICT ... UPDATE SET call.
 
         args:
             merging_in: the name of the table we're merging in
@@ -658,14 +675,15 @@ class CloudSQLWriter(BaseWriter):
         self, write_table: str, write_table_primary_key: str, df: pd.DataFrame
     ) -> str:
         """
-        Appends a set of rows from a dataframe to an existing table with the same schema.
-        Note that this will not work if the dataframe has column names or a column order
-        that does not exactly match that of the table it is being appended to.
+        Appends a set of rows from a dataframe to an existing table with the same
+        schema. Note that this will not work if the dataframe has column names or
+        a column order that does not exactly match that of the table it is being
+        appended to.
 
         args:
-        df:  dataframe containing the rows to append
-        write_table: the name of the table we'll be upserting the data into
-        write_table_primary_key: the primary key of the write_table
+            df: dataframe containing the rows to append
+            write_table: the name of the table we'll be upserting the data into
+            write_table_primary_key: the primary key of the write_table
         """
 
         nrows = int(df.shape[0])
@@ -685,7 +703,9 @@ class CloudSQLWriter(BaseWriter):
                             INSERT INTO {write_table}
                             SELECT * FROM {temp_write_table}
                             ON CONFLICT ({write_table_primary_key}) DO
-                                UPDATE SET {self.gen_update_set_parms("EXCLUDED", table_cols, write_table_primary_key)}
+                                UPDATE SET {self.gen_update_set_parms(
+                                    "EXCLUDED", table_cols, write_table_primary_key
+                                    )}
                             """
                     )
             except Exception as err:

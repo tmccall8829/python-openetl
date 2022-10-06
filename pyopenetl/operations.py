@@ -118,6 +118,7 @@ class BaseWriter:
         df: pd.DataFrame,
         chunksize: int = 100_000_000,
         table_schema: Union[None, str] = None,
+        dtypes: dict = {},
     ) -> str:
         """
         Writes a pandas dataframe to a given SQL table. Note that this assumes that the
@@ -129,6 +130,8 @@ class BaseWriter:
             df: the data to write
             chunksize: the number of rows to write out at once. default to large enough
                 to write the whole df at once.
+            table_schema: the SQL schema of the table to write out to
+            dtypes: a dictionary of column names to SQLAlchemy data types
         """
 
         # we need to define this here instead of as a class method,
@@ -164,15 +167,27 @@ class BaseWriter:
                 df = self.convert_column_types(df)
                 n_rows = int(df.shape[0])
                 try:
-                    df.to_sql(
-                        name=table,
-                        schema=table_schema,
-                        con=sql_conn,
-                        if_exists="append",
-                        index=False,
-                        chunksize=chunksize,
-                        method=buffer_write,
-                    )
+                    if len(dtypes) > 0:
+                        df.to_sql(
+                            name=table,
+                            schema=table_schema,
+                            con=sql_conn,
+                            if_exists="append",
+                            index=False,
+                            chunksize=chunksize,
+                            method=buffer_write,
+                            dtype=dtypes,
+                        )
+                    else:
+                        df.to_sql(
+                            name=table,
+                            schema=table_schema,
+                            con=sql_conn,
+                            if_exists="append",
+                            index=False,
+                            chunksize=chunksize,
+                            method=buffer_write,
+                        )
                 except Exception as err:
                     raise err from err
 

@@ -50,6 +50,7 @@ class PostgresConnection(BaseConnection):
 
     def __init__(
         self,
+        project: str,
         username: str = "postgres",
         password: str = "",
         port: int = 5432,
@@ -62,6 +63,7 @@ class PostgresConnection(BaseConnection):
         self.instance_password = password
         self.instance_db = db
         self.stream_results = stream_results
+        self.project = project
 
     @contextlib.contextmanager
     def connect(self) -> Generator[sqlalchemy.engine.Engine, None, None]:
@@ -190,6 +192,7 @@ class BQConnection(BaseConnection):
         super().__init__(project)
 
         self.stream_results = stream_results
+        self.project = project
 
     @contextlib.contextmanager
     def connect(self) -> Generator[sqlalchemy.engine.Engine, None, None]:

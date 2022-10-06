@@ -57,13 +57,13 @@ class PostgresConnection(BaseConnection):
         db: str = "postgres",
         stream_results: bool = False,
     ) -> None:
+        super().__init__(project)
         self.instance_ip = os.environ.get("POSTGRES_INSTANCE_IP", "127.0.0.1")
         self.instance_port = port
         self.instance_username = username
         self.instance_password = password
         self.instance_db = db
         self.stream_results = stream_results
-        self.project = project
 
     @contextlib.contextmanager
     def connect(self) -> Generator[sqlalchemy.engine.Engine, None, None]:
@@ -160,8 +160,6 @@ class CloudSQLConnection(PostgresConnection):
         db: str = "postgres",
     ) -> None:
         super().__init__(project)
-
-        self.project = project
         self.instance_username = username
 
         # set the PostgresConnection class's password to be the value
@@ -192,7 +190,6 @@ class BQConnection(BaseConnection):
         super().__init__(project)
 
         self.stream_results = stream_results
-        self.project = project
 
     @contextlib.contextmanager
     def connect(self) -> Generator[sqlalchemy.engine.Engine, None, None]:

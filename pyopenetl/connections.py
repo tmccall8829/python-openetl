@@ -50,12 +50,14 @@ class PostgresConnection(BaseConnection):
 
     def __init__(
         self,
+        project: str,
         username: str = "postgres",
         password: str = "",
         port: int = 5432,
         db: str = "postgres",
         stream_results: bool = False,
     ) -> None:
+        super().__init__(project)
         self.instance_ip = os.environ.get("POSTGRES_INSTANCE_IP", "127.0.0.1")
         self.instance_port = port
         self.instance_username = username
@@ -158,8 +160,6 @@ class CloudSQLConnection(PostgresConnection):
         db: str = "postgres",
     ) -> None:
         super().__init__(project)
-
-        self.project = project
         self.instance_username = username
 
         # set the PostgresConnection class's password to be the value

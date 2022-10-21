@@ -24,7 +24,10 @@ class BaseReader:
     """
 
     def __init__(
-        self, source_conn: Union[HerokuConnection, CloudSQLConnection, BQConnection]
+        self,
+        source_conn: Union[
+            HerokuConnection, CloudSQLConnection, BQConnection, PostgresConnection
+        ],
     ) -> None:
         self.source_conn = source_conn
 
@@ -99,8 +102,12 @@ class BaseWriter:
 
     def __init__(
         self,
-        source_conn: Union[HerokuConnection, CloudSQLConnection, BQConnection, None],
-        dest_conn: Union[HerokuConnection, CloudSQLConnection, BQConnection],
+        source_conn: Union[
+            HerokuConnection, CloudSQLConnection, BQConnection, PostgresConnection, None
+        ],
+        dest_conn: Union[
+            HerokuConnection, CloudSQLConnection, BQConnection, PostgresConnection
+        ],
     ) -> None:
         self.source_conn = source_conn
         self.dest_conn = dest_conn
@@ -287,7 +294,9 @@ class CloudSQLWriter(BaseWriter):
 
     def __init__(
         self,
-        source_conn: Union[HerokuConnection, CloudSQLConnection, BQConnection],
+        source_conn: Union[
+            HerokuConnection, CloudSQLConnection, BQConnection, PostgresConnection
+        ],
         dest_conn: CloudSQLConnection,
     ) -> None:
         assert isinstance(dest_conn, CloudSQLConnection), TypeError(

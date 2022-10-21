@@ -1,7 +1,7 @@
 from typing import Union
 
-import pyopenetl.connections as poe_conns
-import pyopenetl.operations as poe_ops
+from . import connections as poe_conns
+from . import operations as poe_ops
 
 
 class BasePipeline:

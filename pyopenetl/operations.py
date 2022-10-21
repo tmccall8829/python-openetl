@@ -11,7 +11,12 @@ import time
 import pandas as pd
 import sqlalchemy
 
-from pyopenetl import HerokuConnection, CloudSQLConnection, BQConnection
+from pyopenetl.connections import (
+    HerokuConnection,
+    CloudSQLConnection,
+    BQConnection,
+    PostgresConnection,
+)
 
 
 class BaseReader:

@@ -4,17 +4,18 @@ import gc
 import io
 import json
 import logging
-import requests
 import tarfile
-from typing import Generator, Union
 import time
+from typing import Generator, Union
+
 import pandas as pd
+import requests
 import sqlalchemy
 
 from pyopenetl.connections import (
-    HerokuConnection,
-    CloudSQLConnection,
     BQConnection,
+    CloudSQLConnection,
+    HerokuConnection,
     PostgresConnection,
 )
 
@@ -37,7 +38,7 @@ class BaseReader:
         self.source_conn = source_conn
 
     def table_to_dataframe(
-        self, table: str, chunksize: int = 100000
+        self, table: str, chunksize: int = 100000, dtype: dict = None
     ) -> Generator[pd.DataFrame, None, None]:
         """
         Yields a generator that reads chunks from a SQL table into a dataframe.
@@ -47,11 +48,11 @@ class BaseReader:
             chunksize: the number of rows to read in at a time
         """
         query = f"SELECT * FROM {table}"
-        for df in self.sql_to_dataframe(query, chunksize):
+        for df in self.sql_to_dataframe(query, chunksize, dtype):
             yield df
 
     def sql_to_dataframe(
-        self, query: str, chunksize: int = 100000
+        self, query: str, chunksize: int = 100000, dtype: dict = None
     ) -> Generator[pd.DataFrame, None, None]:
         """
         Yields a generator that reads chunks from a SQL table into a dataframe with a
@@ -63,7 +64,9 @@ class BaseReader:
             chunksize: the number of rows to read in at a time
         """
         with self.source_conn.connect() as conn:
-            for df in pd.read_sql(query, con=conn, chunksize=chunksize):
+            for df in pd.read_sql_query(
+                query, con=conn, chunksize=chunksize, dtype=dtype
+            ):
                 yield df
 
 
@@ -334,10 +337,7 @@ class CloudSQLWriter(BaseWriter):
                 )
             else:
                 df.head(0).to_sql(
-                    name=table,
-                    con=pd_conn,
-                    if_exists="replace",
-                    index=False,
+                    name=table, con=pd_conn, if_exists="replace", index=False,
                 )
 
         with self.dest_conn.connect() as cloud_sql_conn:

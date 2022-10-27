@@ -4,17 +4,18 @@ import gc
 import io
 import json
 import logging
-import requests
 import tarfile
-from typing import Generator, Union
 import time
+from typing import Generator, Union
+
 import pandas as pd
+import requests
 import sqlalchemy
 
 from pyopenetl.connections import (
-    HerokuConnection,
-    CloudSQLConnection,
     BQConnection,
+    CloudSQLConnection,
+    HerokuConnection,
     PostgresConnection,
 )
 
@@ -37,7 +38,7 @@ class BaseReader:
         self.source_conn = source_conn
 
     def table_to_dataframe(
-        self, table: str, chunksize: int = 100000
+        self, table: str, chunksize: int = 100000, dtype: dict = None
     ) -> Generator[pd.DataFrame, None, None]:
         """
         Yields a generator that reads chunks from a SQL table into a dataframe.
@@ -45,13 +46,14 @@ class BaseReader:
         args:
             table: the name of the table to read into a dataframe
             chunksize: the number of rows to read in at a time
+            dtype: dictionary of Numpy data types to columns (see pd.read_sql_query() documentation)
         """
         query = f"SELECT * FROM {table}"
-        for df in self.sql_to_dataframe(query, chunksize):
+        for df in self.sql_to_dataframe(query, chunksize, dtype):
             yield df
 
     def sql_to_dataframe(
-        self, query: str, chunksize: int = 100000
+        self, query: str, chunksize: int = 100000, dtype: dict = None
     ) -> Generator[pd.DataFrame, None, None]:
         """
         Yields a generator that reads chunks from a SQL table into a dataframe with a
@@ -61,10 +63,19 @@ class BaseReader:
         args:
             query: the text of your desired sql query
             chunksize: the number of rows to read in at a time
+             dtype: dictionary of Numpy data types to columns (see pd.read_sql_query() documentation)
         """
         with self.source_conn.connect() as conn:
-            for df in pd.read_sql(query, con=conn, chunksize=chunksize):
-                yield df
+            if dtype:
+                for df in pd.read_sql_query(
+                    query, con=conn, chunksize=chunksize, dtype=dtype
+                ):
+                    yield df
+            else:
+                for df in pd.read_sql_query(
+                    query, con=conn, chunksize=chunksize, dtype=dtype
+                ):
+                    yield df
 
 
 class HerokuReader(BaseReader):
@@ -146,7 +157,7 @@ class BaseWriter:
             chunksize: the number of rows to write out at once. default to large enough
                 to write the whole df at once.
             table_schema: the SQL schema of the table to write out to
-            dtypes: a dictionary of column names to SQLAlchemy data types
+            dtypes: a dictionary of column names to SQLAlchemy data types (NOT numpy data types)
         """
 
         # we need to define this here instead of as a class method,
@@ -318,7 +329,7 @@ class CloudSQLWriter(BaseWriter):
         args:
             table: name of the table to create in Cloud SQL
             df: the dataframe we're using to set column names and types
-            dtypes: a dictionary of column names to sqlalchemy data types
+            dtypes: a dictionary of column names to sqlalchemy data types (NOT numpy data types)
             primary_key: the primary key of the table we're creating
         """
         with self.dest_conn.connect() as pd_conn:

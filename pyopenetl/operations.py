@@ -7,6 +7,7 @@ import logging
 import requests
 import tarfile
 from typing import Generator, Union
+from google.cloud import bigquery
 import time
 import pandas as pd
 import sqlalchemy
@@ -789,3 +790,84 @@ class HerokuWriter(BaseWriter):
                 )
 
         return f"Safely inserted rows in {datetime.datetime.now() - start}"
+
+
+class BigQueryWriter(BaseWriter):
+    """
+    A BigQuery Writer class with methods that will allow
+    the user to write data out to a BigQuery project-dataset.
+    """
+
+    def __init__(
+        self,
+        source_conn: Union[HerokuConnection, CloudSQLConnection, BQConnection, None],
+        dest_conn: BQConnection,
+    ):
+        assert isinstance(dest_conn, BQConnection), TypeError(
+            "Destination connection type must be a BQConnection object."
+        )
+        super().__init__(source_conn, dest_conn)
+
+    def load_csv_from_gcp_uri(self,
+                              dest_dataset: str,
+                              dest_table: str,
+                              source_uri: str,
+                              schema: dict = None,
+                              field_delimiter: str = '\t',
+                              header: bool = True,
+                              allow_quoted_newlines: bool = True,
+                              clustering_fields: list[str] = None):
+        """
+        Loads the data into destination dataset/table in BigQuery
+        from delimited CSV file in GoogleCloudStorage
+        args:
+            dest_dataset: str, Name of the dataset in BigQuery Project
+            dest_table: str, name of the table to insert data into
+            source_uri: str, CloudStorage URI of the file to loaded
+            schema: dict, dictionary holding the names of the columns
+            and the details(datatype, comments, etc.) about it
+            Example: {
+                'col1': {'datatype': 'INTEGER'},
+                'col2': {'datatype': 'STRING'},
+                'col3': {'datatype': 'DATETIME'}
+            }
+            field_delimiter: str, column delimiter of the file
+            header: bool, if the file contains column names as part of the file
+            allow_quoted_newlines: bool, to allow new line characters in a
+            string column quoted
+            clustering_fields: list[str], List of fields to cluster the destination
+            table
+        """
+
+        # Construct a BigQuery client object.
+        client = self.dest_conn.Client()
+
+        destination = f"{client.project}.{dest_dataset}.{dest_table}"
+        if schema:
+            bq_schema = [bigquery.SchemaField(c, v['datatype'])
+                         for (c, v) in schema.items()]
+            job_config = bigquery.LoadJobConfig(
+                schema=bq_schema if schema else None,
+                autodetect=True if not schema else False,
+                field_delimiter=field_delimiter,
+                skip_leading_rows=1 if header else 0,
+                clustering_fields=clustering_fields if clustering_fields else [],
+                allow_quoted_newlines=allow_quoted_newlines
+            )
+        start_time = time.time()
+        load_job = client.load_table_from_uri(
+            source_uri=source_uri,
+            destination=destination,
+            job_config=job_config
+        )  # Make an API request.
+
+        try:
+            load_job.result()  # Waits for the job to complete.
+        except Exception as err:
+            raise RuntimeError(
+                f"Failed to load data into {destination} from {uri}: {err}"
+            )
+        end_time = time.time()
+        bq_table = client.get_table(destination)
+        logging.info(f"Loaded {destination} with {bq_table.num_rows} rows"
+                     f"in {(end_time - start_time):.2f} secs.")
